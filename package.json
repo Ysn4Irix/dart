@@ -1,0 +1,18 @@
+{
+  "name": "telegram-drive",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Transform Telegram's Saved Messages into an organized, private cloud storage system",
+  "scripts": {
+    "dev": "pnpm --parallel --filter telegram-drive-server --filter telegram-drive-client run dev",
+    "dev:server": "pnpm --filter telegram-drive-server run dev",
+    "dev:client": "pnpm --filter telegram-drive-client run dev",
+    "build": "pnpm --filter telegram-drive-server run build && pnpm --filter telegram-drive-client run build",
+    "start": "pnpm --filter telegram-drive-server run start",
+    "lint": "pnpm --filter telegram-drive-server run lint && pnpm --filter telegram-drive-client run lint",
+    "typecheck": "pnpm --filter telegram-drive-server run typecheck && pnpm --filter telegram-drive-client run typecheck"
+  },
+  "devDependencies": {
+    "typescript": "^5.8.2"
+  }
+}
