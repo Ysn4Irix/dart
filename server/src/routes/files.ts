@@ -24,7 +24,12 @@ export async function fileRoutes(fastify: FastifyInstance) {
   // List files with optional search & folder filtering
   fastify.get('/api/files', async (request) => {
     const query = request.query as { folderId?: string; search?: string };
-    const folderId = query.folderId !== undefined ? (query.folderId === 'root' ? null : query.folderId) : null;
+    const folderId =
+      query.folderId !== undefined
+        ? query.folderId === 'root' || query.folderId === '__recent__'
+          ? null
+          : query.folderId
+        : null;
     return fileRepo.list(folderId, query.search);
   });
 
@@ -67,6 +72,7 @@ export async function fileRoutes(fastify: FastifyInstance) {
         folder_id: folderId,
         telegram_message_id: result.messageId,
         telegram_access_hash: result.accessHash,
+        created_at: result.date,
       });
 
       return fileRecord;

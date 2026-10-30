@@ -1,5 +1,5 @@
 import React from 'react';
-import { Folder as FolderIcon, HardDrive, Trash2, FolderPlus } from 'lucide-react';
+import { Folder as FolderIcon, HardDrive, Trash2, FolderPlus, Clock } from 'lucide-react';
 import { Folder } from '../types.js';
 import { formatBytes } from '../api.js';
 
@@ -43,6 +43,19 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 <span>All Files</span>
               </div>
               <span className="text-xs text-stone-500">{totalFilesCount}</span>
+            </button>
+            <button
+              onClick={() => onSelectFolder('__recent__')}
+              className={`w-full flex items-center justify-between px-3 py-2 text-sm rounded-lg transition-colors cursor-pointer ${
+                currentFolderId === '__recent__'
+                  ? 'bg-stone-800 text-stone-100 font-medium'
+                  : 'text-stone-400 hover:text-stone-200 hover:bg-stone-800/40'
+              }`}
+            >
+              <div className="flex items-center gap-2.5">
+                <Clock className="w-4 h-4 text-teal-400" />
+                <span>Recent Files</span>
+              </div>
             </button>
           </nav>
         </div>

@@ -39,9 +39,14 @@ export async function syncSavedMessages(limit = 200): Promise<SyncResult> {
       continue;
     }
 
-    // Skip if already indexed
+    const messageDate = message.date ? message.date * 1000 : Date.now();
+
+    // If already indexed, synchronize authentic Telegram timestamp
     const existing = fileRepo.getByMessageId(message.id);
     if (existing) {
+      if (message.date && existing.created_at !== messageDate) {
+        fileRepo.updateDate(message.id, messageDate);
+      }
       skipped++;
       continue;
     }
@@ -97,6 +102,7 @@ export async function syncSavedMessages(limit = 200): Promise<SyncResult> {
       folder_id: null,
       telegram_message_id: message.id,
       telegram_access_hash: accessHash,
+      created_at: messageDate,
     });
 
     added++;

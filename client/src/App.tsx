@@ -57,10 +57,11 @@ export function App() {
 
   const loadData = async () => {
     try {
+      const folderParam = currentFolderId === '__recent__' ? null : currentFolderId;
       const [status, loadedFolders, loadedFiles] = await Promise.all([
         api.getAuthStatus(),
         api.getFolders(null),
-        api.getFiles(currentFolderId, search),
+        api.getFiles(folderParam, search),
       ]);
       setAuthStatus(status);
       setFolders(loadedFolders);

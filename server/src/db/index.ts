@@ -174,10 +174,11 @@ export const fileRepo = {
     folder_id: string | null;
     telegram_message_id: number;
     telegram_access_hash?: string | null;
+    created_at?: number;
   }): FileRecord {
     const db = getDatabase();
     const id = nanoid(16);
-    const createdAt = Date.now();
+    const createdAt = file.created_at || Date.now();
     const stmt = db.prepare(`
       INSERT INTO files (id, name, size, mime_type, folder_id, telegram_message_id, telegram_access_hash, status, created_at)
       VALUES (?, ?, ?, ?, ?, ?, ?, 'active', ?)
@@ -203,6 +204,12 @@ export const fileRepo = {
       status: 'active',
       created_at: createdAt,
     };
+  },
+
+  updateDate(telegramMessageId: number, createdAt: number): void {
+    const db = getDatabase();
+    const stmt = db.prepare('UPDATE files SET created_at = ? WHERE telegram_message_id = ?');
+    stmt.run(createdAt, telegramMessageId);
   },
 
   updateStatus(id: string, status: 'active' | 'missing'): void {

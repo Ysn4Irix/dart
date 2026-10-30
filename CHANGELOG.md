@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.0] - 2026-10-30
+
+### Added
+- **Authentic Telegram Timestamps:** Synchronizes true Telegram message dates (`message.date * 1000`) across all synced files, backfilling existing files and preserving chronological history.
+- **Date Range Filtering Presets:** Added quick date filters for "All Dates", "Last 24 Hours", "Past 7 Days", "Past 30 Days", and "Past Year" with live matching record counts.
+- **Recent Files Quick Navigation:** Dedicated "Recent Files" view option in the storage sidebar and breadcrumb bar for instant access to the latest files.
+- **Adaptive Timestamp Formatting:** Smart date formatting displaying relative recency ("Today, 10:45 AM", "Yesterday, 3:20 PM", "6d ago") for recent items and standard calendar dates for older items, with exact full timestamps on hover.
+- **Compound Filters & Active Filter Controls:** Interactive quick-clear action for active date range filter combined with category selection and query search.
+
 ## [0.4.0] - 2026-10-30
 
 ### Added

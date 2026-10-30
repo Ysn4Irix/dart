@@ -11,6 +11,7 @@ export interface UploadResult {
   fileSize: number;
   mimeType: string;
   accessHash: string | null;
+  date: number;
 }
 
 /**
@@ -55,5 +56,6 @@ export async function uploadToSavedMessages(
     fileSize,
     mimeType: media?.document?.mimeType || mimeType,
     accessHash,
+    date: message.date ? message.date * 1000 : Date.now(),
   };
 }

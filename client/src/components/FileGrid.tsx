@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   FileText,
   FileCode,
@@ -19,13 +19,105 @@ import {
   ArrowUpDown,
   X,
   Filter,
+  Calendar,
+  Clock,
 } from 'lucide-react';
 import { FileRecord, Folder } from '../types.js';
 import { formatBytes } from '../api.js';
 
 export type FileCategory = 'all' | 'documents' | 'media' | 'audio' | 'archives' | 'apps' | 'code';
+export type DateFilter = 'all' | 'today' | 'week' | 'month' | 'year';
 export type SortOption = 'newest' | 'oldest' | 'name_asc' | 'name_desc' | 'size_desc' | 'size_asc';
 export type ViewMode = 'grid' | 'list';
+
+export const DATE_FILTERS: { id: DateFilter; label: string; shortLabel: string }[] = [
+  { id: 'all', label: 'All Dates', shortLabel: 'All Dates' },
+  { id: 'today', label: 'Last 24 Hours', shortLabel: 'Today (24h)' },
+  { id: 'week', label: 'Past 7 Days', shortLabel: 'Past 7 Days' },
+  { id: 'month', label: 'Past 30 Days', shortLabel: 'Past 30 Days' },
+  { id: 'year', label: 'Past Year', shortLabel: 'Past Year' },
+];
+
+function matchesDate(file: FileRecord, dateFilter: DateFilter): boolean {
+  if (dateFilter === 'all') return true;
+  const now = Date.now();
+  const diffMs = now - file.created_at;
+  switch (dateFilter) {
+    case 'today':
+      return diffMs <= 24 * 60 * 60 * 1000 && diffMs >= 0;
+    case 'week':
+      return diffMs <= 7 * 24 * 60 * 60 * 1000 && diffMs >= 0;
+    case 'month':
+      return diffMs <= 30 * 24 * 60 * 60 * 1000 && diffMs >= 0;
+    case 'year':
+      return diffMs <= 365 * 24 * 60 * 60 * 1000 && diffMs >= 0;
+    default:
+      return true;
+  }
+}
+
+export function formatFileDate(timestamp: number): { display: string; full: string; relative: string } {
+  const date = new Date(timestamp);
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffSec = Math.floor(diffMs / 1000);
+  const diffMin = Math.floor(diffSec / 60);
+  const diffHours = Math.floor(diffMin / 60);
+  const diffDays = Math.floor(diffHours / 24);
+
+  const full = date.toLocaleString(undefined, {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+  });
+
+  const isToday =
+    date.getDate() === now.getDate() &&
+    date.getMonth() === now.getMonth() &&
+    date.getFullYear() === now.getFullYear();
+
+  const yesterday = new Date(now);
+  yesterday.setDate(yesterday.getDate() - 1);
+  const isYesterday =
+    date.getDate() === yesterday.getDate() &&
+    date.getMonth() === yesterday.getMonth() &&
+    date.getFullYear() === yesterday.getFullYear();
+
+  let relative = '';
+  if (diffSec < 60 && diffSec >= 0) {
+    relative = 'Just now';
+  } else if (diffMin < 60 && diffMin >= 0) {
+    relative = `${diffMin}m ago`;
+  } else if (diffHours < 24 && diffHours >= 0) {
+    relative = `${diffHours}h ago`;
+  } else if (diffDays === 1) {
+    relative = 'Yesterday';
+  } else if (diffDays < 30) {
+    relative = `${diffDays}d ago`;
+  } else if (diffDays < 365) {
+    const months = Math.floor(diffDays / 30);
+    relative = `${months}mo ago`;
+  } else {
+    const years = Math.floor(diffDays / 365);
+    relative = `${years}y ago`;
+  }
+
+  let display: string;
+  if (isToday) {
+    display = `Today, ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+  } else if (isYesterday) {
+    display = `Yesterday, ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+  } else if (date.getFullYear() === now.getFullYear()) {
+    display = date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+  } else {
+    display = date.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+  }
+
+  return { display, full, relative };
+}
 
 interface FileGridProps {
   files: FileRecord[];
@@ -181,7 +273,34 @@ export const FileGrid: React.FC<FileGridProps> = ({
 
   // Filter & Sort state
   const [selectedCategory, setSelectedCategory] = useState<FileCategory>('all');
+  const [selectedDateFilter, setSelectedDateFilter] = useState<DateFilter>(() => {
+    return currentFolderId === '__recent__' ? 'week' : 'all';
+  });
   const [sortOption, setSortOption] = useState<SortOption>('newest');
+
+  useEffect(() => {
+    if (currentFolderId === '__recent__') {
+      setSelectedDateFilter('week');
+    }
+  }, [currentFolderId]);
+
+  // Date counts
+  const dateCounts = useMemo(() => {
+    const counts: Record<DateFilter, number> = {
+      all: files.length,
+      today: 0,
+      week: 0,
+      month: 0,
+      year: 0,
+    };
+    for (const f of files) {
+      if (matchesDate(f, 'today')) counts.today++;
+      if (matchesDate(f, 'week')) counts.week++;
+      if (matchesDate(f, 'month')) counts.month++;
+      if (matchesDate(f, 'year')) counts.year++;
+    }
+    return counts;
+  }, [files]);
 
   // Category counts
   const categoryCounts = useMemo(() => {
@@ -207,7 +326,11 @@ export const FileGrid: React.FC<FileGridProps> = ({
 
   // Filtered & Sorted files
   const filteredFiles = useMemo(() => {
-    const list = files.filter((f) => matchesCategory(f, selectedCategory));
+    const list = files.filter((f) => {
+      if (!matchesCategory(f, selectedCategory)) return false;
+      if (!matchesDate(f, selectedDateFilter)) return false;
+      return true;
+    });
 
     return list.sort((a, b) => {
       switch (sortOption) {
@@ -227,7 +350,7 @@ export const FileGrid: React.FC<FileGridProps> = ({
           return 0;
       }
     });
-  }, [files, selectedCategory, sortOption]);
+  }, [files, selectedCategory, selectedDateFilter, sortOption]);
 
   const getFileIcon = (mime: string, name: string) => {
     if (name.endsWith('.apk')) return <Package className="w-5 h-5 text-emerald-400" />;
@@ -278,12 +401,20 @@ export const FileGrid: React.FC<FileGridProps> = ({
           >
             All Files
           </button>
-          {currentFolder && (
+          {currentFolderId === '__recent__' ? (
+            <>
+              <ChevronRight className="w-4 h-4 text-stone-600" />
+              <span className="font-medium text-stone-100 flex items-center gap-1.5">
+                <Clock className="w-3.5 h-3.5 text-teal-400" />
+                Recent Files
+              </span>
+            </>
+          ) : currentFolder ? (
             <>
               <ChevronRight className="w-4 h-4 text-stone-600" />
               <span className="font-medium text-stone-100">{currentFolder.name}</span>
             </>
-          )}
+          ) : null}
           <span className="text-stone-600 text-xs">•</span>
           <span className="text-xs text-stone-500">
             {filteredFiles.length} {filteredFiles.length === 1 ? 'file' : 'files'}
@@ -292,7 +423,34 @@ export const FileGrid: React.FC<FileGridProps> = ({
         </div>
 
         {/* View Mode & Sort Controls */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3">
+          {/* Date Range Filter Dropdown */}
+          <div className="flex items-center gap-1.5 text-xs text-stone-400 bg-stone-800/80 px-2.5 py-1.5 rounded-lg border border-stone-700/60">
+            <Calendar className="w-3.5 h-3.5 text-stone-500" />
+            <select
+              value={selectedDateFilter}
+              onChange={(e) => setSelectedDateFilter(e.target.value as DateFilter)}
+              className="bg-transparent text-stone-200 focus:outline-none cursor-pointer"
+              title="Filter by message date"
+            >
+              <option value="all" className="bg-stone-900 text-stone-200">
+                All Dates ({dateCounts.all})
+              </option>
+              <option value="today" className="bg-stone-900 text-stone-200">
+                Last 24 Hours ({dateCounts.today})
+              </option>
+              <option value="week" className="bg-stone-900 text-stone-200">
+                Past 7 Days ({dateCounts.week})
+              </option>
+              <option value="month" className="bg-stone-900 text-stone-200">
+                Past 30 Days ({dateCounts.month})
+              </option>
+              <option value="year" className="bg-stone-900 text-stone-200">
+                Past Year ({dateCounts.year})
+              </option>
+            </select>
+          </div>
+
           {/* Sort Dropdown */}
           <div className="flex items-center gap-1.5 text-xs text-stone-400 bg-stone-800/80 px-2.5 py-1.5 rounded-lg border border-stone-700/60">
             <ArrowUpDown className="w-3.5 h-3.5 text-stone-500" />
@@ -365,21 +523,35 @@ export const FileGrid: React.FC<FileGridProps> = ({
           })}
         </div>
 
-        {/* Active Search indicator with Clear button */}
-        {searchQuery && (
-          <div className="flex items-center gap-2 text-xs text-stone-400 shrink-0">
-            <span>Query: &ldquo;{searchQuery}&rdquo;</span>
-            {onClearSearch && (
-              <button
-                onClick={onClearSearch}
-                className="p-1 hover:text-stone-200 rounded cursor-pointer"
-                title="Clear search"
-              >
-                <X className="w-3 h-3" />
-              </button>
-            )}
-          </div>
-        )}
+        {/* Active Filters & Search indicator */}
+        <div className="flex items-center gap-2 shrink-0">
+          {selectedDateFilter !== 'all' && (
+            <button
+              onClick={() => setSelectedDateFilter('all')}
+              className="flex items-center gap-1.5 px-2.5 py-1 text-xs text-stone-300 hover:text-stone-100 bg-stone-800/80 hover:bg-stone-800 rounded-lg border border-stone-700/60 transition-colors cursor-pointer"
+              title="Clear date filter"
+            >
+              <Calendar className="w-3 h-3 text-emerald-400" />
+              <span>Date: {DATE_FILTERS.find((d) => d.id === selectedDateFilter)?.shortLabel}</span>
+              <X className="w-3 h-3 text-stone-500 hover:text-stone-200" />
+            </button>
+          )}
+
+          {searchQuery && (
+            <div className="flex items-center gap-1.5 text-xs text-stone-400 px-2.5 py-1 bg-stone-800/60 rounded-lg border border-stone-700/40">
+              <span>Query: &ldquo;{searchQuery}&rdquo;</span>
+              {onClearSearch && (
+                <button
+                  onClick={onClearSearch}
+                  className="p-0.5 hover:text-stone-200 rounded cursor-pointer"
+                  title="Clear search"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              )}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Main Content Area */}
@@ -409,13 +581,20 @@ export const FileGrid: React.FC<FileGridProps> = ({
             <FileText className="w-10 h-10 mb-3 text-stone-600" />
             <div className="text-stone-300 font-medium">No files match this filter</div>
             <div className="text-xs text-stone-500 mt-1 max-w-sm mb-4">
-              No files found in &ldquo;{CATEGORIES.find((c) => c.id === selectedCategory)?.label}&rdquo;.
+              {selectedCategory !== 'all' && selectedDateFilter !== 'all'
+                ? `No files found in "${CATEGORIES.find((c) => c.id === selectedCategory)?.label}" within ${DATE_FILTERS.find((d) => d.id === selectedDateFilter)?.shortLabel.toLowerCase()}.`
+                : selectedDateFilter !== 'all'
+                ? `No files found within ${DATE_FILTERS.find((d) => d.id === selectedDateFilter)?.shortLabel.toLowerCase()}.`
+                : `No files found in "${CATEGORIES.find((c) => c.id === selectedCategory)?.label}".`}
             </div>
             <button
-              onClick={() => setSelectedCategory('all')}
+              onClick={() => {
+                setSelectedCategory('all');
+                setSelectedDateFilter('all');
+              }}
               className="px-3.5 py-1.5 bg-stone-800 hover:bg-stone-700 text-stone-200 text-xs font-medium rounded-lg border border-stone-700 transition-colors cursor-pointer"
             >
-              Reset to All Files
+              Reset All Filters
             </button>
           </div>
         ) : viewMode === 'grid' ? (
@@ -425,6 +604,7 @@ export const FileGrid: React.FC<FileGridProps> = ({
               const hasPreview = isMedia(file.mime_type);
               const isMissing = file.status === 'missing';
               const ext = getFileExtension(file.name);
+              const dateInfo = formatFileDate(file.created_at);
 
               return (
                 <div
@@ -494,7 +674,9 @@ export const FileGrid: React.FC<FileGridProps> = ({
                     <div className="flex items-center gap-2 text-stone-400">
                       <span>{formatBytes(file.size)}</span>
                       <span>•</span>
-                      <span>{new Date(file.created_at).toLocaleDateString()}</span>
+                      <span title={dateInfo.full} className="hover:text-stone-200 transition-colors cursor-default">
+                        {dateInfo.display}
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -525,7 +707,7 @@ export const FileGrid: React.FC<FileGridProps> = ({
                     className="py-3 px-4 cursor-pointer hover:text-stone-200 select-none hidden sm:table-cell"
                   >
                     <div className="flex items-center gap-1.5">
-                      <span>Date Added</span>
+                      <span>Telegram Date</span>
                       <ArrowUpDown className="w-3 h-3 text-stone-500" />
                     </div>
                   </th>
@@ -549,6 +731,7 @@ export const FileGrid: React.FC<FileGridProps> = ({
                   const hasPreview = isMedia(file.mime_type);
                   const isMissing = file.status === 'missing';
                   const ext = getFileExtension(file.name);
+                  const dateInfo = formatFileDate(file.created_at);
 
                   return (
                     <tr
@@ -581,8 +764,13 @@ export const FileGrid: React.FC<FileGridProps> = ({
                       </td>
 
                       {/* Date */}
-                      <td className="py-3 px-4 text-xs text-stone-400 hidden sm:table-cell">
-                        {new Date(file.created_at).toLocaleDateString()}
+                      <td className="py-3 px-4 text-xs text-stone-400 hidden sm:table-cell" title={dateInfo.full}>
+                        <div className="flex flex-col">
+                          <span className="text-stone-300 font-normal">{dateInfo.display}</span>
+                          {dateInfo.relative && dateInfo.relative !== dateInfo.display && (
+                            <span className="text-[11px] text-stone-500">{dateInfo.relative}</span>
+                          )}
+                        </div>
                       </td>
 
                       {/* Size */}
