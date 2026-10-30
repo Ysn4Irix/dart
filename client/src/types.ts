@@ -30,6 +30,8 @@ export interface AuthStatus {
   authorized: boolean;
 }
 
+export type Theme = 'light' | 'dark';
+
 export interface PublicShareDetails {
   id: string;
   fileName: string;

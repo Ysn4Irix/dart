@@ -25,26 +25,26 @@ export const PreviewModal: React.FC<PreviewModalProps> = ({
   const isPdf = file.mime_type === 'application/pdf';
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4 backdrop-blur-sm">
-      <div className="bg-stone-900 border border-stone-800 rounded-xl w-full max-w-4xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden">
+    <div className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4 backdrop-blur-sm">
+      <div className="bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-xl w-full max-w-4xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden transition-colors">
         {/* Header */}
-        <div className="px-6 py-4 border-b border-stone-800 flex items-center justify-between">
+        <div className="px-6 py-4 border-b border-stone-200 dark:border-stone-800 flex items-center justify-between">
           <div className="flex-1 truncate mr-4">
-            <h3 className="font-semibold text-stone-100 text-sm truncate">{file.name}</h3>
-            <span className="text-xs text-stone-400">{formatBytes(file.size)}</span>
+            <h3 className="font-semibold text-stone-900 dark:text-stone-100 text-sm truncate">{file.name}</h3>
+            <span className="text-xs text-stone-500 dark:text-stone-400">{formatBytes(file.size)}</span>
           </div>
 
           <div className="flex items-center gap-3">
             <button
               onClick={() => onDownload(file)}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-stone-800 hover:bg-stone-700 text-stone-200 text-xs font-medium rounded-lg transition-colors cursor-pointer"
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-stone-100 dark:bg-stone-800 hover:bg-stone-200 dark:hover:bg-stone-700 text-stone-800 dark:text-stone-200 text-xs font-medium rounded-lg border border-stone-200 dark:border-stone-700/60 transition-colors cursor-pointer"
             >
               <Download className="w-4 h-4" />
               <span>Download</span>
             </button>
             <button
               onClick={onClose}
-              className="text-stone-400 hover:text-stone-200 transition-colors p-1 cursor-pointer"
+              className="text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 transition-colors p-1 cursor-pointer"
             >
               <X className="w-5 h-5" />
             </button>
@@ -52,7 +52,7 @@ export const PreviewModal: React.FC<PreviewModalProps> = ({
         </div>
 
         {/* Media Player / Viewer */}
-        <div className="flex-1 overflow-auto bg-stone-950 flex items-center justify-center p-6 min-h-[400px]">
+        <div className="flex-1 overflow-auto bg-stone-100 dark:bg-stone-950 flex items-center justify-center p-6 min-h-[400px]">
           {isVideo && (
             <video
               controls
@@ -65,8 +65,8 @@ export const PreviewModal: React.FC<PreviewModalProps> = ({
           )}
 
           {isAudio && (
-            <div className="w-full max-w-md p-6 bg-stone-900 rounded-xl border border-stone-800 text-center space-y-4">
-              <div className="text-sm font-medium text-stone-200 truncate">{file.name}</div>
+            <div className="w-full max-w-md p-6 bg-white dark:bg-stone-900 rounded-xl border border-stone-200 dark:border-stone-800 text-center space-y-4 shadow-sm">
+              <div className="text-sm font-medium text-stone-900 dark:text-stone-200 truncate">{file.name}</div>
               <audio controls className="w-full" src={streamUrl}>
                 Your browser does not support the audio element.
               </audio>
@@ -85,14 +85,14 @@ export const PreviewModal: React.FC<PreviewModalProps> = ({
             <iframe
               src={streamUrl}
               title={file.name}
-              className="w-full h-[70vh] rounded-lg border border-stone-800"
+              className="w-full h-[70vh] rounded-lg border border-stone-200 dark:border-stone-800"
             />
           )}
 
           {!isVideo && !isAudio && !isImage && !isPdf && (
-            <div className="text-center text-stone-400 space-y-2">
-              <AlertCircle className="w-10 h-10 mx-auto text-stone-500" />
-              <div className="text-sm font-medium text-stone-200">No preview available</div>
+            <div className="text-center text-stone-500 dark:text-stone-400 space-y-2">
+              <AlertCircle className="w-10 h-10 mx-auto text-stone-400 dark:text-stone-500" />
+              <div className="text-sm font-medium text-stone-800 dark:text-stone-200">No preview available</div>
               <div className="text-xs text-stone-500">
                 This file type cannot be previewed in the browser. You can download it directly.
               </div>

@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.0] - 2026-10-30
+
+### Added
+- **Light & Dark Theme Engine:** Fully cohesive theme system supporting light mode and dark mode with Tailwind CSS v4 class-based variants (`.dark`).
+- **One-Click Theme Toggle:** Added animated Sun / Moon switcher to the top navigation header with persistent storage (`dart_theme`) and system preference auto-detection.
+- **Zero-Flash Theme Bootstrapping:** Inlined theme detection in `index.html` ensuring no FOIT (Flash of Incorrect Theme) upon page load or reload.
+- **Tailored Light Mode Aesthetics:** Clean stone palette (`stone-50` background, `white` cards, `stone-200` borders, `stone-900` text) designed with crisp readability and zero decorative pill clutter.
+- **Full Component Theming:** Synchronized light and dark themes across Header, Sidebar, FileGrid (both Grid and List views), PreviewModal, ShareModal, UploadModal, AuthModal, and PublicSharePage.
+
 ## [0.5.0] - 2026-10-30
 
 ### Added

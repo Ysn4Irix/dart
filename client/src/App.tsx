@@ -8,7 +8,7 @@ import { PreviewModal } from './components/PreviewModal.js';
 import { AuthModal } from './components/AuthModal.js';
 import { PublicSharePage } from './pages/PublicSharePage.js';
 import { api } from './api.js';
-import { AuthStatus, FileRecord, Folder } from './types.js';
+import { AuthStatus, FileRecord, Folder, Theme } from './types.js';
 
 export function App() {
   // Check if we are on a public share link route: /s/:slug
@@ -19,6 +19,28 @@ export function App() {
       return <PublicSharePage slug={slug} />;
     }
   }
+
+  // Theme state (light / dark)
+  const [theme, setTheme] = useState<Theme>(() => {
+    const saved = localStorage.getItem('dart_theme') as Theme | null;
+    if (saved === 'light' || saved === 'dark') return saved;
+    return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  });
+
+  useEffect(() => {
+    if (theme === 'dark') {
+      document.documentElement.classList.add('dark');
+      document.documentElement.setAttribute('data-theme', 'dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+      document.documentElement.setAttribute('data-theme', 'light');
+    }
+    localStorage.setItem('dart_theme', theme);
+  }, [theme]);
+
+  const handleToggleTheme = () => {
+    setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
+  };
 
   // Dashboard state
   const [authStatus, setAuthStatus] = useState<AuthStatus | null>(null);
@@ -123,7 +145,7 @@ export function App() {
   const totalSize = files.reduce((acc, f) => acc + f.size, 0);
 
   return (
-    <div className="flex flex-col h-screen overflow-hidden bg-stone-900 text-stone-100">
+    <div className="flex flex-col h-screen overflow-hidden bg-stone-50 dark:bg-stone-900 text-stone-900 dark:text-stone-100 transition-colors">
       <Header
         search={search}
         onSearchChange={setSearch}
@@ -133,6 +155,8 @@ export function App() {
         onSync={handleSync}
         isSyncing={isSyncing}
         authStatus={authStatus}
+        theme={theme}
+        onToggleTheme={handleToggleTheme}
       />
 
       <div className="flex flex-1 overflow-hidden">

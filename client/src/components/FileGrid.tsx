@@ -388,35 +388,35 @@ export const FileGrid: React.FC<FileGridProps> = ({
   };
 
   return (
-    <div className="flex-1 flex flex-col overflow-hidden bg-stone-900">
+    <div className="flex-1 flex flex-col overflow-hidden bg-white dark:bg-stone-900 transition-colors">
       {/* Top Bar: Breadcrumb + Toolbar */}
-      <div className="px-6 py-3.5 border-b border-stone-800 flex flex-wrap items-center justify-between gap-4 bg-stone-900/60 backdrop-blur">
+      <div className="px-6 py-3.5 border-b border-stone-200 dark:border-stone-800 flex flex-wrap items-center justify-between gap-4 bg-white/70 dark:bg-stone-900/60 backdrop-blur">
         {/* Breadcrumb & Count */}
-        <div className="flex items-center gap-2 text-sm text-stone-400">
+        <div className="flex items-center gap-2 text-sm text-stone-500 dark:text-stone-400">
           <button
             onClick={() => onNavigateFolder(null)}
-            className={`hover:text-stone-100 transition-colors cursor-pointer ${
-              currentFolderId === null ? 'font-medium text-stone-100' : ''
+            className={`hover:text-stone-900 dark:hover:text-stone-100 transition-colors cursor-pointer ${
+              currentFolderId === null ? 'font-medium text-stone-900 dark:text-stone-100' : ''
             }`}
           >
             All Files
           </button>
           {currentFolderId === '__recent__' ? (
             <>
-              <ChevronRight className="w-4 h-4 text-stone-600" />
-              <span className="font-medium text-stone-100 flex items-center gap-1.5">
-                <Clock className="w-3.5 h-3.5 text-teal-400" />
+              <ChevronRight className="w-4 h-4 text-stone-400 dark:text-stone-600" />
+              <span className="font-medium text-stone-900 dark:text-stone-100 flex items-center gap-1.5">
+                <Clock className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" />
                 Recent Files
               </span>
             </>
           ) : currentFolder ? (
             <>
-              <ChevronRight className="w-4 h-4 text-stone-600" />
-              <span className="font-medium text-stone-100">{currentFolder.name}</span>
+              <ChevronRight className="w-4 h-4 text-stone-400 dark:text-stone-600" />
+              <span className="font-medium text-stone-900 dark:text-stone-100">{currentFolder.name}</span>
             </>
           ) : null}
-          <span className="text-stone-600 text-xs">•</span>
-          <span className="text-xs text-stone-500">
+          <span className="text-stone-300 dark:text-stone-600 text-xs">•</span>
+          <span className="text-xs text-stone-400 dark:text-stone-500">
             {filteredFiles.length} {filteredFiles.length === 1 ? 'file' : 'files'}
             {filteredFiles.length !== files.length && ` (of ${files.length})`}
           </span>
@@ -425,57 +425,57 @@ export const FileGrid: React.FC<FileGridProps> = ({
         {/* View Mode & Sort Controls */}
         <div className="flex items-center gap-2 sm:gap-3">
           {/* Date Range Filter Dropdown */}
-          <div className="flex items-center gap-1.5 text-xs text-stone-400 bg-stone-800/80 px-2.5 py-1.5 rounded-lg border border-stone-700/60">
+          <div className="flex items-center gap-1.5 text-xs text-stone-600 dark:text-stone-400 bg-stone-100 dark:bg-stone-800/80 px-2.5 py-1.5 rounded-lg border border-stone-200 dark:border-stone-700/60">
             <Calendar className="w-3.5 h-3.5 text-stone-500" />
             <select
               value={selectedDateFilter}
               onChange={(e) => setSelectedDateFilter(e.target.value as DateFilter)}
-              className="bg-transparent text-stone-200 focus:outline-none cursor-pointer"
+              className="bg-transparent text-stone-800 dark:text-stone-200 focus:outline-none cursor-pointer"
               title="Filter by message date"
             >
-              <option value="all" className="bg-stone-900 text-stone-200">
+              <option value="all" className="bg-white dark:bg-stone-900 text-stone-900 dark:text-stone-200">
                 All Dates ({dateCounts.all})
               </option>
-              <option value="today" className="bg-stone-900 text-stone-200">
+              <option value="today" className="bg-white dark:bg-stone-900 text-stone-900 dark:text-stone-200">
                 Last 24 Hours ({dateCounts.today})
               </option>
-              <option value="week" className="bg-stone-900 text-stone-200">
+              <option value="week" className="bg-white dark:bg-stone-900 text-stone-900 dark:text-stone-200">
                 Past 7 Days ({dateCounts.week})
               </option>
-              <option value="month" className="bg-stone-900 text-stone-200">
+              <option value="month" className="bg-white dark:bg-stone-900 text-stone-900 dark:text-stone-200">
                 Past 30 Days ({dateCounts.month})
               </option>
-              <option value="year" className="bg-stone-900 text-stone-200">
+              <option value="year" className="bg-white dark:bg-stone-900 text-stone-900 dark:text-stone-200">
                 Past Year ({dateCounts.year})
               </option>
             </select>
           </div>
 
           {/* Sort Dropdown */}
-          <div className="flex items-center gap-1.5 text-xs text-stone-400 bg-stone-800/80 px-2.5 py-1.5 rounded-lg border border-stone-700/60">
+          <div className="flex items-center gap-1.5 text-xs text-stone-600 dark:text-stone-400 bg-stone-100 dark:bg-stone-800/80 px-2.5 py-1.5 rounded-lg border border-stone-200 dark:border-stone-700/60">
             <ArrowUpDown className="w-3.5 h-3.5 text-stone-500" />
             <select
               value={sortOption}
               onChange={(e) => setSortOption(e.target.value as SortOption)}
-              className="bg-transparent text-stone-200 focus:outline-none cursor-pointer"
+              className="bg-transparent text-stone-800 dark:text-stone-200 focus:outline-none cursor-pointer"
             >
-              <option value="newest" className="bg-stone-900 text-stone-200">Date: Newest</option>
-              <option value="oldest" className="bg-stone-900 text-stone-200">Date: Oldest</option>
-              <option value="name_asc" className="bg-stone-900 text-stone-200">Name: A to Z</option>
-              <option value="name_desc" className="bg-stone-900 text-stone-200">Name: Z to A</option>
-              <option value="size_desc" className="bg-stone-900 text-stone-200">Size: Largest</option>
-              <option value="size_asc" className="bg-stone-900 text-stone-200">Size: Smallest</option>
+              <option value="newest" className="bg-white dark:bg-stone-900 text-stone-900 dark:text-stone-200">Date: Newest</option>
+              <option value="oldest" className="bg-white dark:bg-stone-900 text-stone-900 dark:text-stone-200">Date: Oldest</option>
+              <option value="name_asc" className="bg-white dark:bg-stone-900 text-stone-900 dark:text-stone-200">Name: A to Z</option>
+              <option value="name_desc" className="bg-white dark:bg-stone-900 text-stone-900 dark:text-stone-200">Name: Z to A</option>
+              <option value="size_desc" className="bg-white dark:bg-stone-900 text-stone-900 dark:text-stone-200">Size: Largest</option>
+              <option value="size_asc" className="bg-white dark:bg-stone-900 text-stone-900 dark:text-stone-200">Size: Smallest</option>
             </select>
           </div>
 
           {/* View Mode Toggle: Grid vs List */}
-          <div className="flex items-center bg-stone-800/80 p-0.5 rounded-lg border border-stone-700/60">
+          <div className="flex items-center bg-stone-100 dark:bg-stone-800/80 p-0.5 rounded-lg border border-stone-200 dark:border-stone-700/60">
             <button
               onClick={() => handleToggleViewMode('grid')}
               className={`p-1.5 rounded-md transition-colors cursor-pointer ${
                 viewMode === 'grid'
-                  ? 'bg-stone-700 text-stone-100 shadow-xs'
-                  : 'text-stone-400 hover:text-stone-200'
+                  ? 'bg-white dark:bg-stone-700 text-stone-900 dark:text-stone-100 shadow-2xs'
+                  : 'text-stone-400 hover:text-stone-700 dark:hover:text-stone-200'
               }`}
               title="Grid View"
             >
@@ -485,8 +485,8 @@ export const FileGrid: React.FC<FileGridProps> = ({
               onClick={() => handleToggleViewMode('list')}
               className={`p-1.5 rounded-md transition-colors cursor-pointer ${
                 viewMode === 'list'
-                  ? 'bg-stone-700 text-stone-100 shadow-xs'
-                  : 'text-stone-400 hover:text-stone-200'
+                  ? 'bg-white dark:bg-stone-700 text-stone-900 dark:text-stone-100 shadow-2xs'
+                  : 'text-stone-400 hover:text-stone-700 dark:hover:text-stone-200'
               }`}
               title="List View"
             >
@@ -497,9 +497,9 @@ export const FileGrid: React.FC<FileGridProps> = ({
       </div>
 
       {/* Filter Bar: Category Chips */}
-      <div className="px-6 py-2.5 border-b border-stone-800/80 bg-stone-950/40 flex items-center justify-between gap-4 overflow-x-auto">
+      <div className="px-6 py-2.5 border-b border-stone-200 dark:border-stone-800/80 bg-stone-50/70 dark:bg-stone-950/40 flex items-center justify-between gap-4 overflow-x-auto">
         <div className="flex items-center gap-1.5 shrink-0">
-          <Filter className="w-3.5 h-3.5 text-stone-500 mr-1 shrink-0" />
+          <Filter className="w-3.5 h-3.5 text-stone-400 dark:text-stone-500 mr-1 shrink-0" />
           {CATEGORIES.map((cat) => {
             const count = categoryCounts[cat.id];
             const isSelected = selectedCategory === cat.id;
@@ -510,12 +510,12 @@ export const FileGrid: React.FC<FileGridProps> = ({
                 onClick={() => setSelectedCategory(cat.id)}
                 className={`px-3 py-1 text-xs rounded-lg transition-colors cursor-pointer flex items-center gap-1.5 shrink-0 ${
                   isSelected
-                    ? 'bg-stone-800 text-stone-100 font-medium border border-stone-700'
-                    : 'text-stone-400 hover:text-stone-200 hover:bg-stone-800/50'
+                    ? 'bg-white dark:bg-stone-800 text-stone-900 dark:text-stone-100 font-medium border border-stone-300 dark:border-stone-700 shadow-2xs'
+                    : 'text-stone-600 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-200 hover:bg-stone-200/50 dark:hover:bg-stone-800/50'
                 }`}
               >
                 <span>{cat.label}</span>
-                <span className={`text-[11px] ${isSelected ? 'text-emerald-400' : 'text-stone-500'}`}>
+                <span className={`text-[11px] ${isSelected ? 'text-emerald-600 dark:text-emerald-400 font-semibold' : 'text-stone-400 dark:text-stone-500'}`}>
                   {count}
                 </span>
               </button>
@@ -528,22 +528,22 @@ export const FileGrid: React.FC<FileGridProps> = ({
           {selectedDateFilter !== 'all' && (
             <button
               onClick={() => setSelectedDateFilter('all')}
-              className="flex items-center gap-1.5 px-2.5 py-1 text-xs text-stone-300 hover:text-stone-100 bg-stone-800/80 hover:bg-stone-800 rounded-lg border border-stone-700/60 transition-colors cursor-pointer"
+              className="flex items-center gap-1.5 px-2.5 py-1 text-xs text-stone-700 dark:text-stone-300 hover:text-stone-900 dark:hover:text-stone-100 bg-white dark:bg-stone-800/80 hover:bg-stone-100 dark:hover:bg-stone-800 rounded-lg border border-stone-200 dark:border-stone-700/60 shadow-2xs transition-colors cursor-pointer"
               title="Clear date filter"
             >
-              <Calendar className="w-3 h-3 text-emerald-400" />
+              <Calendar className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
               <span>Date: {DATE_FILTERS.find((d) => d.id === selectedDateFilter)?.shortLabel}</span>
-              <X className="w-3 h-3 text-stone-500 hover:text-stone-200" />
+              <X className="w-3 h-3 text-stone-400 hover:text-stone-700 dark:hover:text-stone-200" />
             </button>
           )}
 
           {searchQuery && (
-            <div className="flex items-center gap-1.5 text-xs text-stone-400 px-2.5 py-1 bg-stone-800/60 rounded-lg border border-stone-700/40">
+            <div className="flex items-center gap-1.5 text-xs text-stone-600 dark:text-stone-400 px-2.5 py-1 bg-stone-100 dark:bg-stone-800/60 rounded-lg border border-stone-200 dark:border-stone-700/40">
               <span>Query: &ldquo;{searchQuery}&rdquo;</span>
               {onClearSearch && (
                 <button
                   onClick={onClearSearch}
-                  className="p-0.5 hover:text-stone-200 rounded cursor-pointer"
+                  className="p-0.5 hover:text-stone-900 dark:hover:text-stone-200 rounded cursor-pointer"
                   title="Clear search"
                 >
                   <X className="w-3 h-3" />
@@ -558,9 +558,9 @@ export const FileGrid: React.FC<FileGridProps> = ({
       <div className="flex-1 overflow-y-auto p-6">
         {files.length === 0 ? (
           /* Empty Storage State */
-          <div className="h-64 flex flex-col items-center justify-center text-center text-stone-500 border border-dashed border-stone-800 rounded-xl p-6">
-            <FileText className="w-10 h-10 mb-3 text-stone-600" />
-            <div className="text-stone-300 font-medium">No files displayed yet</div>
+          <div className="h-64 flex flex-col items-center justify-center text-center text-stone-500 border border-dashed border-stone-300 dark:border-stone-800 rounded-xl p-6 bg-stone-50/50 dark:bg-transparent">
+            <FileText className="w-10 h-10 mb-3 text-stone-400 dark:text-stone-600" />
+            <div className="text-stone-800 dark:text-stone-300 font-medium">No files displayed yet</div>
             <div className="text-xs text-stone-500 mt-1 max-w-sm mb-4">
               If your Telegram Saved Messages already has files, click below to scan and import them into Dart.
             </div>
@@ -568,18 +568,18 @@ export const FileGrid: React.FC<FileGridProps> = ({
               <button
                 onClick={onSync}
                 disabled={isSyncing}
-                className="flex items-center gap-2 px-4 py-2 bg-stone-800 hover:bg-stone-700 text-stone-200 text-xs font-medium rounded-lg border border-stone-700 transition-colors cursor-pointer"
+                className="flex items-center gap-2 px-4 py-2 bg-stone-100 dark:bg-stone-800 hover:bg-stone-200 dark:hover:bg-stone-700 text-stone-800 dark:text-stone-200 text-xs font-medium rounded-lg border border-stone-300 dark:border-stone-700 transition-colors cursor-pointer shadow-2xs"
               >
-                <RefreshCw className={`w-3.5 h-3.5 ${isSyncing ? 'animate-spin text-emerald-400' : ''}`} />
+                <RefreshCw className={`w-3.5 h-3.5 ${isSyncing ? 'animate-spin text-emerald-500 dark:text-emerald-400' : ''}`} />
                 <span>{isSyncing ? 'Scanning Saved Messages...' : 'Scan & Import Saved Messages'}</span>
               </button>
             )}
           </div>
         ) : filteredFiles.length === 0 ? (
           /* Filter Return Zero State */
-          <div className="h-64 flex flex-col items-center justify-center text-center text-stone-500 border border-dashed border-stone-800 rounded-xl p-6">
-            <FileText className="w-10 h-10 mb-3 text-stone-600" />
-            <div className="text-stone-300 font-medium">No files match this filter</div>
+          <div className="h-64 flex flex-col items-center justify-center text-center text-stone-500 border border-dashed border-stone-300 dark:border-stone-800 rounded-xl p-6 bg-stone-50/50 dark:bg-transparent">
+            <FileText className="w-10 h-10 mb-3 text-stone-400 dark:text-stone-600" />
+            <div className="text-stone-800 dark:text-stone-300 font-medium">No files match this filter</div>
             <div className="text-xs text-stone-500 mt-1 max-w-sm mb-4">
               {selectedCategory !== 'all' && selectedDateFilter !== 'all'
                 ? `No files found in "${CATEGORIES.find((c) => c.id === selectedCategory)?.label}" within ${DATE_FILTERS.find((d) => d.id === selectedDateFilter)?.shortLabel.toLowerCase()}.`
@@ -592,7 +592,7 @@ export const FileGrid: React.FC<FileGridProps> = ({
                 setSelectedCategory('all');
                 setSelectedDateFilter('all');
               }}
-              className="px-3.5 py-1.5 bg-stone-800 hover:bg-stone-700 text-stone-200 text-xs font-medium rounded-lg border border-stone-700 transition-colors cursor-pointer"
+              className="px-3.5 py-1.5 bg-stone-100 dark:bg-stone-800 hover:bg-stone-200 dark:hover:bg-stone-700 text-stone-800 dark:text-stone-200 text-xs font-medium rounded-lg border border-stone-300 dark:border-stone-700 transition-colors cursor-pointer shadow-2xs"
             >
               Reset All Filters
             </button>
@@ -609,13 +609,13 @@ export const FileGrid: React.FC<FileGridProps> = ({
               return (
                 <div
                   key={file.id}
-                  className={`group relative bg-stone-800/40 border border-stone-800 rounded-xl p-4 hover:border-stone-700/80 hover:bg-stone-800/70 transition-all flex flex-col justify-between ${
-                    isMissing ? 'opacity-60 border-red-950/60' : ''
+                  className={`group relative bg-stone-50/80 dark:bg-stone-800/40 border border-stone-200 dark:border-stone-800 rounded-xl p-4 hover:border-stone-300 dark:hover:border-stone-700/80 hover:bg-white dark:hover:bg-stone-800/70 shadow-2xs hover:shadow-xs transition-all flex flex-col justify-between ${
+                    isMissing ? 'opacity-60 border-red-300 dark:border-red-950/60' : ''
                   }`}
                 >
                   <div>
                     <div className="flex items-start justify-between mb-3">
-                      <div className="p-2.5 rounded-lg bg-stone-800 border border-stone-700/40">
+                      <div className="p-2.5 rounded-lg bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-700/40 shadow-2xs">
                         {getFileIcon(file.mime_type, file.name)}
                       </div>
 
@@ -624,7 +624,7 @@ export const FileGrid: React.FC<FileGridProps> = ({
                         {hasPreview && !isMissing && (
                           <button
                             onClick={() => onPreview(file)}
-                            className="p-1.5 text-stone-400 hover:text-stone-100 hover:bg-stone-700/60 rounded-md transition-colors cursor-pointer"
+                            className="p-1.5 text-stone-500 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-100 hover:bg-stone-200/60 dark:hover:bg-stone-700/60 rounded-md transition-colors cursor-pointer"
                             title="Preview / Stream"
                           >
                             <Eye className="w-3.5 h-3.5" />
@@ -633,7 +633,7 @@ export const FileGrid: React.FC<FileGridProps> = ({
                         {!isMissing && (
                           <button
                             onClick={() => onShare(file)}
-                            className="p-1.5 text-stone-400 hover:text-stone-100 hover:bg-stone-700/60 rounded-md transition-colors cursor-pointer"
+                            className="p-1.5 text-stone-500 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-100 hover:bg-stone-200/60 dark:hover:bg-stone-700/60 rounded-md transition-colors cursor-pointer"
                             title="Share Link"
                           >
                             <Share2 className="w-3.5 h-3.5" />
@@ -641,14 +641,14 @@ export const FileGrid: React.FC<FileGridProps> = ({
                         )}
                         <button
                           onClick={() => onDownload(file)}
-                          className="p-1.5 text-stone-400 hover:text-stone-100 hover:bg-stone-700/60 rounded-md transition-colors cursor-pointer"
+                          className="p-1.5 text-stone-500 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-100 hover:bg-stone-200/60 dark:hover:bg-stone-700/60 rounded-md transition-colors cursor-pointer"
                           title="Download"
                         >
                           <Download className="w-3.5 h-3.5" />
                         </button>
                         <button
                           onClick={() => onDelete(file)}
-                          className="p-1.5 text-stone-400 hover:text-red-400 hover:bg-stone-700/60 rounded-md transition-colors cursor-pointer"
+                          className="p-1.5 text-stone-500 dark:text-stone-400 hover:text-red-500 dark:hover:text-red-400 hover:bg-stone-200/60 dark:hover:bg-stone-700/60 rounded-md transition-colors cursor-pointer"
                           title="Delete"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
@@ -656,12 +656,12 @@ export const FileGrid: React.FC<FileGridProps> = ({
                       </div>
                     </div>
 
-                    <div className="font-medium text-sm text-stone-200 truncate mb-1" title={file.name}>
+                    <div className="font-medium text-sm text-stone-900 dark:text-stone-200 truncate mb-1" title={file.name}>
                       {file.name}
                     </div>
 
                     {isMissing && (
-                      <div className="flex items-center gap-1.5 text-xs text-red-400 mb-2">
+                      <div className="flex items-center gap-1.5 text-xs text-red-500 dark:text-red-400 mb-2">
                         <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
                         <span>Deleted from Telegram</span>
                       </div>
@@ -669,12 +669,12 @@ export const FileGrid: React.FC<FileGridProps> = ({
                   </div>
 
                   {/* Metadata row: Plain text as per UI rules */}
-                  <div className="mt-3 pt-3 border-t border-stone-800/80 flex items-center justify-between text-xs text-stone-400">
-                    <span className="font-mono text-[11px] text-stone-500">{ext}</span>
-                    <div className="flex items-center gap-2 text-stone-400">
+                  <div className="mt-3 pt-3 border-t border-stone-200 dark:border-stone-800/80 flex items-center justify-between text-xs text-stone-500 dark:text-stone-400">
+                    <span className="font-mono text-[11px] text-stone-400 dark:text-stone-500">{ext}</span>
+                    <div className="flex items-center gap-2">
                       <span>{formatBytes(file.size)}</span>
                       <span>•</span>
-                      <span title={dateInfo.full} className="hover:text-stone-200 transition-colors cursor-default">
+                      <span title={dateInfo.full} className="hover:text-stone-800 dark:hover:text-stone-200 transition-colors cursor-default">
                         {dateInfo.display}
                       </span>
                     </div>
@@ -685,48 +685,48 @@ export const FileGrid: React.FC<FileGridProps> = ({
           </div>
         ) : (
           /* LIST VIEW */
-          <div className="bg-stone-800/30 border border-stone-800 rounded-xl overflow-hidden">
+          <div className="bg-white dark:bg-stone-800/30 border border-stone-200 dark:border-stone-800 rounded-xl overflow-hidden shadow-2xs">
             <table className="w-full text-left text-sm border-collapse">
               <thead>
-                <tr className="border-b border-stone-800 text-xs font-semibold text-stone-400 bg-stone-900/40">
+                <tr className="border-b border-stone-200 dark:border-stone-800 text-xs font-semibold text-stone-500 dark:text-stone-400 bg-stone-50/80 dark:bg-stone-900/40">
                   <th
                     onClick={() =>
                       setSortOption((prev) => (prev === 'name_asc' ? 'name_desc' : 'name_asc'))
                     }
-                    className="py-3 px-4 cursor-pointer hover:text-stone-200 select-none"
+                    className="py-3 px-4 cursor-pointer hover:text-stone-800 dark:hover:text-stone-200 select-none"
                   >
                     <div className="flex items-center gap-1.5">
                       <span>Name</span>
-                      <ArrowUpDown className="w-3 h-3 text-stone-500" />
+                      <ArrowUpDown className="w-3 h-3 text-stone-400 dark:text-stone-500" />
                     </div>
                   </th>
                   <th
                     onClick={() =>
                       setSortOption((prev) => (prev === 'newest' ? 'oldest' : 'newest'))
                     }
-                    className="py-3 px-4 cursor-pointer hover:text-stone-200 select-none hidden sm:table-cell"
+                    className="py-3 px-4 cursor-pointer hover:text-stone-800 dark:hover:text-stone-200 select-none hidden sm:table-cell"
                   >
                     <div className="flex items-center gap-1.5">
                       <span>Telegram Date</span>
-                      <ArrowUpDown className="w-3 h-3 text-stone-500" />
+                      <ArrowUpDown className="w-3 h-3 text-stone-400 dark:text-stone-500" />
                     </div>
                   </th>
                   <th
                     onClick={() =>
                       setSortOption((prev) => (prev === 'size_desc' ? 'size_asc' : 'size_desc'))
                     }
-                    className="py-3 px-4 cursor-pointer hover:text-stone-200 select-none text-right"
+                    className="py-3 px-4 cursor-pointer hover:text-stone-800 dark:hover:text-stone-200 select-none text-right"
                   >
                     <div className="flex items-center justify-end gap-1.5">
                       <span>Size</span>
-                      <ArrowUpDown className="w-3 h-3 text-stone-500" />
+                      <ArrowUpDown className="w-3 h-3 text-stone-400 dark:text-stone-500" />
                     </div>
                   </th>
                   <th className="py-3 px-4 text-center hidden md:table-cell">Type</th>
                   <th className="py-3 px-4 text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-stone-800/60">
+              <tbody className="divide-y divide-stone-100 dark:divide-stone-800/60">
                 {filteredFiles.map((file) => {
                   const hasPreview = isMedia(file.mime_type);
                   const isMissing = file.status === 'missing';
@@ -736,25 +736,25 @@ export const FileGrid: React.FC<FileGridProps> = ({
                   return (
                     <tr
                       key={file.id}
-                      className={`hover:bg-stone-800/50 transition-colors group ${
-                        isMissing ? 'opacity-60 bg-red-950/10' : ''
+                      className={`hover:bg-stone-50/80 dark:hover:bg-stone-800/50 transition-colors group ${
+                        isMissing ? 'opacity-60 bg-red-50 dark:bg-red-950/10' : ''
                       }`}
                     >
                       {/* Name */}
                       <td className="py-3 px-4 max-w-xs md:max-w-md truncate">
                         <div className="flex items-center gap-3">
-                          <div className="p-1.5 rounded-lg bg-stone-800/80 border border-stone-700/40 shrink-0">
+                          <div className="p-1.5 rounded-lg bg-stone-100 dark:bg-stone-800/80 border border-stone-200 dark:border-stone-700/40 shrink-0">
                             {getFileIcon(file.mime_type, file.name)}
                           </div>
                           <div className="truncate">
                             <span
-                              className="font-medium text-stone-200 text-sm truncate block"
+                              className="font-medium text-stone-900 dark:text-stone-200 text-sm truncate block"
                               title={file.name}
                             >
                               {file.name}
                             </span>
                             {isMissing && (
-                              <span className="text-xs text-red-400 flex items-center gap-1 mt-0.5">
+                              <span className="text-xs text-red-500 dark:text-red-400 flex items-center gap-1 mt-0.5">
                                 <AlertTriangle className="w-3 h-3 shrink-0" />
                                 Deleted from Telegram
                               </span>
@@ -764,22 +764,22 @@ export const FileGrid: React.FC<FileGridProps> = ({
                       </td>
 
                       {/* Date */}
-                      <td className="py-3 px-4 text-xs text-stone-400 hidden sm:table-cell" title={dateInfo.full}>
+                      <td className="py-3 px-4 text-xs text-stone-500 dark:text-stone-400 hidden sm:table-cell" title={dateInfo.full}>
                         <div className="flex flex-col">
-                          <span className="text-stone-300 font-normal">{dateInfo.display}</span>
+                          <span className="text-stone-800 dark:text-stone-300 font-normal">{dateInfo.display}</span>
                           {dateInfo.relative && dateInfo.relative !== dateInfo.display && (
-                            <span className="text-[11px] text-stone-500">{dateInfo.relative}</span>
+                            <span className="text-[11px] text-stone-400 dark:text-stone-500">{dateInfo.relative}</span>
                           )}
                         </div>
                       </td>
 
                       {/* Size */}
-                      <td className="py-3 px-4 text-xs text-stone-300 font-mono text-right">
+                      <td className="py-3 px-4 text-xs text-stone-600 dark:text-stone-300 font-mono text-right">
                         {formatBytes(file.size)}
                       </td>
 
                       {/* Type format (plain text, no decorative pills) */}
-                      <td className="py-3 px-4 text-xs text-stone-500 font-mono text-center hidden md:table-cell">
+                      <td className="py-3 px-4 text-xs text-stone-400 dark:text-stone-500 font-mono text-center hidden md:table-cell">
                         {ext}
                       </td>
 
@@ -789,7 +789,7 @@ export const FileGrid: React.FC<FileGridProps> = ({
                           {hasPreview && !isMissing && (
                             <button
                               onClick={() => onPreview(file)}
-                              className="p-1.5 text-stone-400 hover:text-stone-100 hover:bg-stone-700/60 rounded-md transition-colors cursor-pointer"
+                              className="p-1.5 text-stone-500 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-100 hover:bg-stone-200/60 dark:hover:bg-stone-700/60 rounded-md transition-colors cursor-pointer"
                               title="Preview / Stream"
                             >
                               <Eye className="w-4 h-4" />
@@ -798,7 +798,7 @@ export const FileGrid: React.FC<FileGridProps> = ({
                           {!isMissing && (
                             <button
                               onClick={() => onShare(file)}
-                              className="p-1.5 text-stone-400 hover:text-stone-100 hover:bg-stone-700/60 rounded-md transition-colors cursor-pointer"
+                              className="p-1.5 text-stone-500 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-100 hover:bg-stone-200/60 dark:hover:bg-stone-700/60 rounded-md transition-colors cursor-pointer"
                               title="Share Link"
                             >
                               <Share2 className="w-4 h-4" />
@@ -806,14 +806,14 @@ export const FileGrid: React.FC<FileGridProps> = ({
                           )}
                           <button
                             onClick={() => onDownload(file)}
-                            className="p-1.5 text-stone-400 hover:text-stone-100 hover:bg-stone-700/60 rounded-md transition-colors cursor-pointer"
+                            className="p-1.5 text-stone-500 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-100 hover:bg-stone-200/60 dark:hover:bg-stone-700/60 rounded-md transition-colors cursor-pointer"
                             title="Download"
                           >
                             <Download className="w-4 h-4" />
                           </button>
                           <button
                             onClick={() => onDelete(file)}
-                            className="p-1.5 text-stone-400 hover:text-red-400 hover:bg-stone-700/60 rounded-md transition-colors cursor-pointer"
+                            className="p-1.5 text-stone-500 dark:text-stone-400 hover:text-red-500 dark:hover:text-red-400 hover:bg-stone-200/60 dark:hover:bg-stone-700/60 rounded-md transition-colors cursor-pointer"
                             title="Delete"
                           >
                             <Trash2 className="w-4 h-4" />
