@@ -149,6 +149,8 @@ export function App() {
           files={files}
           folders={folders}
           currentFolderId={currentFolderId}
+          searchQuery={search}
+          onClearSearch={() => setSearch('')}
           onNavigateFolder={setCurrentFolderId}
           onPreview={(f) => setPreviewTargetFile(f)}
           onDownload={handleDownloadFile}
