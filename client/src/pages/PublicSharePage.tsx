@@ -8,7 +8,7 @@ import {
 } from 'lucide-react';
 import { PublicShareDetails } from '../types.js';
 import { api, formatBytes } from '../api.js';
-import { DartLogo } from '../components/DartLogos.js';
+import { DartLogo } from '../components/DartLogo.js';
 
 interface PublicSharePageProps {
   slug: string;
@@ -63,7 +63,7 @@ export const PublicSharePage: React.FC<PublicSharePageProps> = ({ slug }) => {
         {/* Header Branding */}
         <div className="flex items-center justify-between pb-4 border-b border-stone-800">
           <div className="flex items-center gap-2.5">
-            <DartLogo concept="velocity" size={22} />
+            <DartLogo size={22} />
             <span className="font-semibold text-stone-100 tracking-tight">Dart</span>
           </div>
           <span className="text-xs text-stone-500">Served directly from Telegram Storage</span>

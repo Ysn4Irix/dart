@@ -1,7 +1,7 @@
 import React from 'react';
-import { Search, UploadCloud, FolderPlus, Sparkles } from 'lucide-react';
+import { Search, UploadCloud, FolderPlus } from 'lucide-react';
 import { AuthStatus } from '../types.js';
-import { DartLogo, LogoConcept } from './DartLogos.js';
+import { DartLogo } from './DartLogo.js';
 
 interface HeaderProps {
   search: string;
@@ -9,8 +9,6 @@ interface HeaderProps {
   onOpenUpload: () => void;
   onOpenNewFolder: () => void;
   onOpenAuth: () => void;
-  onOpenBrandModal: () => void;
-  activeLogoConcept: LogoConcept;
   authStatus: AuthStatus | null;
 }
 
@@ -20,31 +18,16 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenUpload,
   onOpenNewFolder,
   onOpenAuth,
-  onOpenBrandModal,
-  activeLogoConcept,
   authStatus,
 }) => {
   return (
     <header className="h-16 border-b border-stone-800 px-6 flex items-center justify-between bg-stone-900/80 backdrop-blur sticky top-0 z-10">
       <div className="flex items-center gap-3">
-        <button
-          onClick={onOpenBrandModal}
-          className="flex items-center gap-2.5 group cursor-pointer hover:opacity-90 transition-opacity"
-          title="Click to view all 5 brand logo concepts"
-        >
-          <div className="p-1 rounded-lg bg-stone-800/80 border border-stone-700/60 group-hover:border-emerald-500/60 transition-colors">
-            <DartLogo concept={activeLogoConcept} size={22} />
-          </div>
-          <span className="font-semibold text-stone-100 text-lg tracking-tight">Dart</span>
-        </button>
+        <div className="p-1 rounded-lg bg-stone-800/80 border border-stone-700/60">
+          <DartLogo size={22} />
+        </div>
+        <span className="font-semibold text-stone-100 text-lg tracking-tight">Dart</span>
         <span className="text-xs text-stone-400 border-l border-stone-700 pl-3">Telegram File Storage</span>
-        <button
-          onClick={onOpenBrandModal}
-          className="flex items-center gap-1 text-[11px] text-stone-400 hover:text-emerald-400 bg-stone-800/40 hover:bg-stone-800 px-2 py-0.5 rounded border border-stone-700/40 transition-colors cursor-pointer"
-        >
-          <Sparkles className="w-3 h-3 text-emerald-400" />
-          <span>5 Logos</span>
-        </button>
       </div>
 
       <div className="flex-1 max-w-md mx-8">
