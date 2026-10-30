@@ -19,6 +19,7 @@ build/
 *.session-journal
 
 # Database & SQLite files
+data/
 *.db
 *.db-journal
 *.sqlite

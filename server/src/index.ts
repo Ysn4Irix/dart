@@ -10,16 +10,7 @@ import { fileRoutes } from './routes/files.js';
 import { shareRoutes } from './routes/shares.js';
 
 const fastify = Fastify({
-  logger: {
-    transport: {
-      target: 'pino-pretty',
-      options: {
-        colorize: true,
-        translateTime: 'HH:MM:ss Z',
-        ignore: 'pid,hostname',
-      },
-    },
-  },
+  logger: true,
   bodyLimit: 1024 * 1024 * 1024 * 2, // 2GB body limit
 });
 
