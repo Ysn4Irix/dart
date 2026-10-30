@@ -156,7 +156,7 @@ export const api = {
   },
 
   async getPublicShare(slug: string): Promise<PublicShareDetails> {
-    const res = await fetch(`${API_BASE}/s/${encodeURIComponent(slug)}`);
+    const res = await fetch(`${API_BASE}/api/shares/${encodeURIComponent(slug)}`);
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
       throw new Error(err.error || 'Share link not found or expired');

@@ -33,7 +33,7 @@ export async function shareRoutes(fastify: FastifyInstance) {
   });
 
   // Public share metadata preview
-  fastify.get('/s/:slug', async (request, reply) => {
+  const getShareHandler = async (request: any, reply: any) => {
     const { slug } = request.params as { slug: string };
     const result = shareRepo.getWithFile(slug);
 
@@ -55,14 +55,17 @@ export async function shareRoutes(fastify: FastifyInstance) {
       downloadCount: share.download_count,
       createdAt: share.created_at,
       expiresAt: share.expires_at,
-      downloadUrl: `/s/${share.id}/download`,
-      streamUrl: `/s/${share.id}/stream`,
+      downloadUrl: `/api/shares/${share.id}/download`,
+      streamUrl: `/api/shares/${share.id}/stream`,
       telegramMessageId: file.telegram_message_id,
     };
-  });
+  };
+
+  fastify.get('/api/shares/:slug', getShareHandler);
+  fastify.get('/s/:slug', getShareHandler);
 
   // Public stream endpoint
-  fastify.get('/s/:slug/stream', async (request, reply) => {
+  const streamHandler = async (request: any, reply: any) => {
     const { slug } = request.params as { slug: string };
     const result = shareRepo.getWithFile(slug);
 
@@ -76,10 +79,13 @@ export async function shareRoutes(fastify: FastifyInstance) {
     }
 
     return streamTelegramFile(file, request, reply, false);
-  });
+  };
+
+  fastify.get('/api/shares/:slug/stream', streamHandler);
+  fastify.get('/s/:slug/stream', streamHandler);
 
   // Public download endpoint
-  fastify.get('/s/:slug/download', async (request, reply) => {
+  const downloadHandler = async (request: any, reply: any) => {
     const { slug } = request.params as { slug: string };
     const result = shareRepo.getWithFile(slug);
 
@@ -96,7 +102,10 @@ export async function shareRoutes(fastify: FastifyInstance) {
     shareRepo.incrementDownload(share.id);
 
     return streamTelegramFile(file, request, reply, true);
-  });
+  };
+
+  fastify.get('/api/shares/:slug/download', downloadHandler);
+  fastify.get('/s/:slug/download', downloadHandler);
 
   // Delete a share link
   fastify.delete('/api/shares/:slug', async (request) => {
