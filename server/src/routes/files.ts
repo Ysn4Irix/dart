@@ -7,8 +7,20 @@ import { pipeline } from 'node:stream/promises';
 import { fileRepo } from '../db/index.js';
 import { uploadToSavedMessages } from '../telegram/uploader.js';
 import { streamTelegramFile } from '../telegram/streamer.js';
+import { syncSavedMessages } from '../telegram/sync.js';
 
 export async function fileRoutes(fastify: FastifyInstance) {
+  // Sync existing files from Telegram Saved Messages
+  fastify.post('/api/files/sync', async (request, reply) => {
+    try {
+      const result = await syncSavedMessages(200);
+      return { success: true, ...result };
+    } catch (err: unknown) {
+      const error = err as Error;
+      return reply.status(500).send({ error: error.message || 'Sync from Saved Messages failed' });
+    }
+  });
+
   // List files with optional search & folder filtering
   fastify.get('/api/files', async (request) => {
     const query = request.query as { folderId?: string; search?: string };

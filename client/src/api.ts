@@ -119,6 +119,19 @@ export const api = {
     });
   },
 
+  async syncFiles(): Promise<{ success: boolean; scanned: number; added: number; skipped: number }> {
+    const res = await fetch(`${API_BASE}/api/files/sync`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({}),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || 'Failed to sync with Telegram');
+    }
+    return res.json();
+  },
+
   async deleteFile(id: string): Promise<void> {
     const res = await fetch(`${API_BASE}/api/files/${encodeURIComponent(id)}`, {
       method: 'DELETE',

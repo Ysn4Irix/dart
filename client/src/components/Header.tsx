@@ -1,5 +1,5 @@
 import React from 'react';
-import { Search, UploadCloud, FolderPlus } from 'lucide-react';
+import { Search, UploadCloud, FolderPlus, RefreshCw } from 'lucide-react';
 import { AuthStatus } from '../types.js';
 import { DartLogo } from './DartLogo.js';
 
@@ -9,6 +9,8 @@ interface HeaderProps {
   onOpenUpload: () => void;
   onOpenNewFolder: () => void;
   onOpenAuth: () => void;
+  onSync: () => void;
+  isSyncing: boolean;
   authStatus: AuthStatus | null;
 }
 
@@ -18,6 +20,8 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenUpload,
   onOpenNewFolder,
   onOpenAuth,
+  onSync,
+  isSyncing,
   authStatus,
 }) => {
   return (
@@ -44,6 +48,16 @@ export const Header: React.FC<HeaderProps> = ({
       </div>
 
       <div className="flex items-center gap-3">
+        <button
+          onClick={onSync}
+          disabled={isSyncing || !authStatus?.authorized}
+          className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-stone-300 hover:text-stone-100 hover:bg-stone-800 disabled:opacity-50 rounded-lg border border-stone-700/60 transition-colors cursor-pointer"
+          title="Scan and import all files from Telegram Saved Messages"
+        >
+          <RefreshCw className={`w-4 h-4 ${isSyncing ? 'animate-spin text-emerald-400' : ''}`} />
+          <span>{isSyncing ? 'Syncing...' : 'Sync Messages'}</span>
+        </button>
+
         <button
           onClick={onOpenNewFolder}
           className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-stone-300 hover:text-stone-100 hover:bg-stone-800 rounded-lg border border-stone-700/60 transition-colors cursor-pointer"

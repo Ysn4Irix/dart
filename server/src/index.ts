@@ -4,6 +4,7 @@ import multipart from '@fastify/multipart';
 import { config } from './config.js';
 import { initDatabase } from './db/index.js';
 import { getTelegramClient } from './telegram/client.js';
+import { syncSavedMessages } from './telegram/sync.js';
 import { authRoutes } from './routes/auth.js';
 import { folderRoutes } from './routes/folders.js';
 import { fileRoutes } from './routes/files.js';
@@ -42,9 +43,22 @@ async function bootstrap() {
   // 4. Background Telegram Connection (if configured)
   if (config.telegram.apiId && config.telegram.apiHash) {
     getTelegramClient()
-      .then((client) => {
+      .then(async (client) => {
         if (client) {
           fastify.log.info('Telegram MTProto client connected.');
+          const isAuth = await client.isUserAuthorized().catch(() => false);
+          if (isAuth) {
+            fastify.log.info('Starting background sync of Saved Messages...');
+            syncSavedMessages(100)
+              .then((res) => {
+                fastify.log.info(
+                  `Background sync complete: scanned ${res.scanned}, added ${res.added}, skipped ${res.skipped}`
+                );
+              })
+              .catch((err) => {
+                fastify.log.warn('Background sync warning: ' + err.message);
+              });
+          }
         }
       })
       .catch((err) => {

@@ -138,6 +138,9 @@ export async function streamTelegramFile(
       });
 
       const readable = Readable.from(downloadIterator);
+      request.raw.on('close', () => {
+        readable.destroy();
+      });
       return reply.send(readable);
     }
 
@@ -159,6 +162,9 @@ export async function streamTelegramFile(
     });
 
     const readable = Readable.from(downloadIterator);
+    request.raw.on('close', () => {
+      readable.destroy();
+    });
     return reply.send(readable);
   } catch (error) {
     safeRelease();

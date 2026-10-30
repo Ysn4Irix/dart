@@ -30,8 +30,30 @@ export function App() {
   // Modals state
   const [isUploadOpen, setIsUploadOpen] = useState(false);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [hasInitialSynced, setHasInitialSynced] = useState(false);
   const [shareTargetFile, setShareTargetFile] = useState<FileRecord | null>(null);
   const [previewTargetFile, setPreviewTargetFile] = useState<FileRecord | null>(null);
+
+  const handleSync = async () => {
+    setIsSyncing(true);
+    try {
+      await api.syncFiles();
+      const [status, loadedFolders, loadedFiles] = await Promise.all([
+        api.getAuthStatus(),
+        api.getFolders(null),
+        api.getFiles(currentFolderId, search),
+      ]);
+      setAuthStatus(status);
+      setFolders(loadedFolders);
+      setFiles(loadedFiles);
+    } catch (err: unknown) {
+      const e = err as Error;
+      console.error('Sync failed:', e.message);
+    } finally {
+      setIsSyncing(false);
+    }
+  };
 
   const loadData = async () => {
     try {
@@ -43,6 +65,12 @@ export function App() {
       setAuthStatus(status);
       setFolders(loadedFolders);
       setFiles(loadedFiles);
+
+      // Auto-scan on load if authorized but local index is empty
+      if (status.authorized && loadedFiles.length === 0 && !hasInitialSynced && !search && currentFolderId === null) {
+        setHasInitialSynced(true);
+        handleSync();
+      }
     } catch (err) {
       console.error('Error loading drive data:', err);
     }
@@ -101,6 +129,8 @@ export function App() {
         onOpenUpload={() => setIsUploadOpen(true)}
         onOpenNewFolder={handleCreateFolder}
         onOpenAuth={() => setIsAuthOpen(true)}
+        onSync={handleSync}
+        isSyncing={isSyncing}
         authStatus={authStatus}
       />
 
@@ -124,6 +154,8 @@ export function App() {
           onDownload={handleDownloadFile}
           onShare={(f) => setShareTargetFile(f)}
           onDelete={handleDeleteFile}
+          onSync={handleSync}
+          isSyncing={isSyncing}
         />
       </div>
 
@@ -151,7 +183,10 @@ export function App() {
       <AuthModal
         isOpen={isAuthOpen}
         onClose={() => setIsAuthOpen(false)}
-        onAuthSuccess={loadData}
+        onAuthSuccess={() => {
+          loadData();
+          handleSync();
+        }}
       />
     </div>
   );

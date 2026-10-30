@@ -12,6 +12,7 @@ import {
   Eye,
   ChevronRight,
   AlertTriangle,
+  RefreshCw,
 } from 'lucide-react';
 import { FileRecord, Folder } from '../types.js';
 import { formatBytes } from '../api.js';
@@ -25,6 +26,8 @@ interface FileGridProps {
   onDownload: (file: FileRecord) => void;
   onShare: (file: FileRecord) => void;
   onDelete: (file: FileRecord) => void;
+  onSync?: () => void;
+  isSyncing?: boolean;
 }
 
 export const FileGrid: React.FC<FileGridProps> = ({
@@ -36,6 +39,8 @@ export const FileGrid: React.FC<FileGridProps> = ({
   onDownload,
   onShare,
   onDelete,
+  onSync,
+  isSyncing = false,
 }) => {
   const currentFolder = folders.find((f) => f.id === currentFolderId);
 
@@ -84,12 +89,22 @@ export const FileGrid: React.FC<FileGridProps> = ({
       {/* Grid Content */}
       <div className="flex-1 overflow-y-auto p-8">
         {files.length === 0 ? (
-          <div className="h-64 flex flex-col items-center justify-center text-center text-stone-500 border border-dashed border-stone-800 rounded-xl">
+          <div className="h-64 flex flex-col items-center justify-center text-center text-stone-500 border border-dashed border-stone-800 rounded-xl p-6">
             <FileText className="w-10 h-10 mb-3 text-stone-600" />
-            <div className="text-stone-300 font-medium">No files in this folder</div>
-            <div className="text-xs text-stone-500 mt-1 max-w-sm">
-              Upload files or forward media into your Telegram Saved Messages to access them here.
+            <div className="text-stone-300 font-medium">No files displayed yet</div>
+            <div className="text-xs text-stone-500 mt-1 max-w-sm mb-4">
+              If your Telegram Saved Messages already has files, click below to scan and import them into Dart.
             </div>
+            {onSync && (
+              <button
+                onClick={onSync}
+                disabled={isSyncing}
+                className="flex items-center gap-2 px-4 py-2 bg-stone-800 hover:bg-stone-700 text-stone-200 text-xs font-medium rounded-lg border border-stone-700 transition-colors cursor-pointer"
+              >
+                <RefreshCw className={`w-3.5 h-3.5 ${isSyncing ? 'animate-spin text-emerald-400' : ''}`} />
+                <span>{isSyncing ? 'Scanning Saved Messages...' : 'Scan & Import Saved Messages'}</span>
+              </button>
+            )}
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
