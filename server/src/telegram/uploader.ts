@@ -34,7 +34,7 @@ export async function uploadToSavedMessages(
   const message = await withFloodWaitRetry(async () => {
     return await client.sendFile('me', {
       file: toUpload,
-      caption: `📁 TG-Drive: ${fileName}`,
+      caption: `📁 Dart: ${fileName}`,
       workers: 4,
     });
   });

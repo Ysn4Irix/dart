@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.0] - 2026-10-30
+
+### Added
+- **Brand Identity "Dart":** Rebranded the application across client dashboard, public share portal, and storage captions.
+- **5 Arrow Brand Logo Concepts:** Vector SVG brand logos (Precision Dart, Forward Shift, Cloud Piercer, Monogram 'D', and Velocity Flight).
+- **Interactive Brand Modal:** Live logo selector allowing real-time switching between all 5 concepts with browser persistence.
+- **High-Res Concept Sheet:** Generated high-resolution brand showcase sheet saved to `client/public/dart_brand_logo_sheet.jpg`.
+
 ## [0.1.0] - 2026-10-29
 
 ### Added

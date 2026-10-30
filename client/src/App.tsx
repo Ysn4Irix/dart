@@ -6,6 +6,8 @@ import { UploadModal } from './components/UploadModal.js';
 import { ShareModal } from './components/ShareModal.js';
 import { PreviewModal } from './components/PreviewModal.js';
 import { AuthModal } from './components/AuthModal.js';
+import { BrandModal } from './components/BrandModal.js';
+import { LogoConcept } from './components/DartLogos.js';
 import { PublicSharePage } from './pages/PublicSharePage.js';
 import { api } from './api.js';
 import { AuthStatus, FileRecord, Folder } from './types.js';
@@ -20,6 +22,16 @@ export function App() {
     }
   }
 
+  // Brand logo concept state
+  const [activeLogoConcept, setActiveLogoConcept] = useState<LogoConcept>(() => {
+    return (localStorage.getItem('dart_logo_concept') as LogoConcept) || 'precision';
+  });
+
+  const handleSelectLogoConcept = (concept: LogoConcept) => {
+    setActiveLogoConcept(concept);
+    localStorage.setItem('dart_logo_concept', concept);
+  };
+
   // Dashboard state
   const [authStatus, setAuthStatus] = useState<AuthStatus | null>(null);
   const [folders, setFolders] = useState<Folder[]>([]);
@@ -30,6 +42,7 @@ export function App() {
   // Modals state
   const [isUploadOpen, setIsUploadOpen] = useState(false);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
+  const [isBrandOpen, setIsBrandOpen] = useState(false);
   const [shareTargetFile, setShareTargetFile] = useState<FileRecord | null>(null);
   const [previewTargetFile, setPreviewTargetFile] = useState<FileRecord | null>(null);
 
@@ -101,6 +114,8 @@ export function App() {
         onOpenUpload={() => setIsUploadOpen(true)}
         onOpenNewFolder={handleCreateFolder}
         onOpenAuth={() => setIsAuthOpen(true)}
+        onOpenBrandModal={() => setIsBrandOpen(true)}
+        activeLogoConcept={activeLogoConcept}
         authStatus={authStatus}
       />
 
@@ -152,6 +167,13 @@ export function App() {
         isOpen={isAuthOpen}
         onClose={() => setIsAuthOpen(false)}
         onAuthSuccess={loadData}
+      />
+
+      <BrandModal
+        isOpen={isBrandOpen}
+        onClose={() => setIsBrandOpen(false)}
+        activeConcept={activeLogoConcept}
+        onSelectConcept={handleSelectLogoConcept}
       />
     </div>
   );
