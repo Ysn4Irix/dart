@@ -22,9 +22,9 @@ export function App() {
     }
   }
 
-  // Brand logo concept state
+  // Brand logo concept state (Concept 5: Velocity Flight is the approved official brand mark)
   const [activeLogoConcept, setActiveLogoConcept] = useState<LogoConcept>(() => {
-    return (localStorage.getItem('dart_logo_concept') as LogoConcept) || 'precision';
+    return (localStorage.getItem('dart_logo_concept') as LogoConcept) || 'velocity';
   });
 
   const handleSelectLogoConcept = (concept: LogoConcept) => {

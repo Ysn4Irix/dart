@@ -174,11 +174,13 @@ export const VelocityDartLogo: React.FC<LogoProps> = ({ className = 'w-6 h-6', s
  * Master Logo component rendering the selected concept
  */
 export const DartLogo: React.FC<{ concept?: LogoConcept; className?: string; size?: number }> = ({
-  concept = 'precision',
+  concept = 'velocity',
   className,
   size,
 }) => {
   switch (concept) {
+    case 'velocity':
+      return <VelocityDartLogo className={className} size={size} />;
     case 'precision':
       return <PrecisionDartLogo className={className} size={size} />;
     case 'shift':
@@ -187,10 +189,8 @@ export const DartLogo: React.FC<{ concept?: LogoConcept; className?: string; siz
       return <CloudPiercerLogo className={className} size={size} />;
     case 'monogram':
       return <MonogramDartLogo className={className} size={size} />;
-    case 'velocity':
-      return <VelocityDartLogo className={className} size={size} />;
     default:
-      return <PrecisionDartLogo className={className} size={size} />;
+      return <VelocityDartLogo className={className} size={size} />;
   }
 };
 
