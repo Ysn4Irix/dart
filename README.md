@@ -95,6 +95,20 @@
 
 ## Continuous Integration & Release Policy
 
-- **Workflows:** Production-ready GitHub Actions CI located in `.github/workflows/ci.yml` automates linting, typechecks, tests, and builds on pushes to `main` and pull requests.
-- **Versioning:** Semantic Versioning (`MAJOR.MINOR.PATCH`) with Conventional Commits (`feat:`, `fix:`, `refactor:`, `docs:`).
-- **Security:** Zero secrets committed to Git; sessions and keys are stored strictly in local `.env` files ignored by version control.
+- **Automated CI Workflow (`.github/workflows/ci.yml`):**
+  - Triggers on every push and pull request to `main`.
+  - Runs frozen-lockfile dependency resolution with `pnpm`.
+  - Executes security audit (`pnpm audit`), strict TypeScript linting and typechecking across all workspace packages (`pnpm run lint`, `pnpm run typecheck`), native automated test suites (`pnpm test`), and production compilation (`pnpm run build`).
+  - Utilizes least-privilege permissions (`contents: read`) and GitHub Actions dependency caching.
+
+- **Automated Release Workflow (`.github/workflows/release.yml`):**
+  - Triggers on git tags matching `v*.*.*` (e.g. `v0.7.0`).
+  - Executes full quality and test suite before packaging.
+  - Automatically packages server and client distribution archives (`dart-server.tar.gz` and `dart-client.tar.gz`).
+  - Publishes a formal GitHub Release with auto-generated release notes and attached distribution artifacts.
+
+- **Git & Release Conventions:**
+  - **Versioning:** Semantic Versioning (`MAJOR.MINOR.PATCH`). Bump `MINOR` for new features and `PATCH` for bug fixes, refactoring, and documentation; bump `MAJOR` only for breaking changes.
+  - **Commit Format:** Conventional Commits (`feat:`, `fix:`, `refactor:`, `docs:`, `chore:`, `test:`).
+  - **Security:** Zero secrets or credential tokens are committed; `.env`, `.session`, and SQLite databases are strictly ignored in `.gitignore`.
+  - **Remote Policy:** Changes are committed locally; remote pushing and release synchronization occur strictly upon explicit user authorization.

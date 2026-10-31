@@ -10,7 +10,8 @@
     "build": "pnpm --filter dart-server run build && pnpm --filter dart-client run build",
     "start": "pnpm --filter dart-server run start",
     "lint": "pnpm --filter dart-server run lint && pnpm --filter dart-client run lint",
-    "typecheck": "pnpm --filter dart-server run typecheck && pnpm --filter dart-client run typecheck"
+    "typecheck": "pnpm --filter dart-server run typecheck && pnpm --filter dart-client run typecheck",
+    "test": "pnpm --filter dart-server run test"
   },
   "devDependencies": {
     "typescript": "^5.8.2"
