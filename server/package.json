@@ -1,6 +1,6 @@
 {
   "name": "dart-server",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "private": true,
   "type": "module",
   "main": "dist/index.js",
@@ -12,6 +12,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@fastify/cookie": "^11.1.5",
     "@fastify/cors": "^10.0.2",
     "@fastify/multipart": "^9.0.3",
     "big-integer": "^1.6.52",

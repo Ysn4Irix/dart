@@ -1,6 +1,22 @@
 import { DatabaseSync } from 'node:sqlite';
 import { nanoid } from 'nanoid';
 import { config } from '../config.js';
+import { generateSessionToken } from '../auth/crypto.js';
+
+export interface User {
+  id: string;
+  username: string;
+  password_hash: string;
+  salt: string;
+  created_at: number;
+}
+
+export interface Session {
+  id: string;
+  user_id: string;
+  created_at: number;
+  expires_at: number;
+}
 
 export interface Folder {
   id: string;
@@ -80,6 +96,22 @@ export function initDatabase() {
     CREATE TABLE IF NOT EXISTS settings (
       key TEXT PRIMARY KEY,
       value TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS users (
+      id TEXT PRIMARY KEY,
+      username TEXT UNIQUE NOT NULL,
+      password_hash TEXT NOT NULL,
+      salt TEXT NOT NULL,
+      created_at INTEGER NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS sessions (
+      id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL,
+      created_at INTEGER NOT NULL,
+      expires_at INTEGER NOT NULL,
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
     );
   `);
 }
@@ -283,5 +315,103 @@ export const shareRepo = {
     const db = getDatabase();
     const stmt = db.prepare('DELETE FROM shares WHERE id = ?');
     stmt.run(id);
+  },
+};
+
+// ================= Users =================
+export const userRepo = {
+  count(): number {
+    const db = getDatabase();
+    const row = db.prepare('SELECT COUNT(*) as count FROM users').get() as { count: number };
+    return row.count;
+  },
+
+  getOwner(): User | null {
+    const db = getDatabase();
+    const row = db.prepare('SELECT * FROM users ORDER BY created_at ASC LIMIT 1').get();
+    return (row as unknown as User) || null;
+  },
+
+  getByUsername(username: string): User | null {
+    const db = getDatabase();
+    const row = db.prepare('SELECT * FROM users WHERE username = ? COLLATE NOCASE').get(username);
+    return (row as unknown as User) || null;
+  },
+
+  getById(id: string): User | null {
+    const db = getDatabase();
+    const row = db.prepare('SELECT * FROM users WHERE id = ?').get(id);
+    return (row as unknown as User) || null;
+  },
+
+  create(username: string, passwordHash: string, salt: string): User {
+    const db = getDatabase();
+    const id = nanoid(12);
+    const createdAt = Date.now();
+    const stmt = db.prepare(
+      'INSERT INTO users (id, username, password_hash, salt, created_at) VALUES (?, ?, ?, ?, ?)'
+    );
+    stmt.run(id, username, passwordHash, salt, createdAt);
+    return { id, username, password_hash: passwordHash, salt, created_at: createdAt };
+  },
+};
+
+// ================= Sessions =================
+export const sessionRepo = {
+  create(userId: string, ttlDays = 30): Session {
+    const db = getDatabase();
+    const id = generateSessionToken();
+    const createdAt = Date.now();
+    const expiresAt = createdAt + ttlDays * 24 * 60 * 60 * 1000;
+    const stmt = db.prepare(
+      'INSERT INTO sessions (id, user_id, created_at, expires_at) VALUES (?, ?, ?, ?)'
+    );
+    stmt.run(id, userId, createdAt, expiresAt);
+    return { id, user_id: userId, created_at: createdAt, expires_at: expiresAt };
+  },
+
+  get(id: string): { session: Session; user: User } | null {
+    const db = getDatabase();
+    const row = db.prepare(`
+      SELECT 
+        s.id as s_id, s.user_id as s_user_id, s.created_at as s_created_at, s.expires_at as s_expires_at,
+        u.id as u_id, u.username as u_username, u.password_hash as u_password_hash, u.salt as u_salt, u.created_at as u_created_at
+      FROM sessions s
+      JOIN users u ON s.user_id = u.id
+      WHERE s.id = ? AND s.expires_at > ?
+    `).get(id, Date.now()) as Record<string, unknown> | undefined;
+
+    if (!row) return null;
+
+    return {
+      session: {
+        id: row.s_id as string,
+        user_id: row.s_user_id as string,
+        created_at: row.s_created_at as number,
+        expires_at: row.s_expires_at as number,
+      },
+      user: {
+        id: row.u_id as string,
+        username: row.u_username as string,
+        password_hash: row.u_password_hash as string,
+        salt: row.u_salt as string,
+        created_at: row.u_created_at as number,
+      },
+    };
+  },
+
+  delete(id: string): void {
+    const db = getDatabase();
+    db.prepare('DELETE FROM sessions WHERE id = ?').run(id);
+  },
+
+  deleteForUser(userId: string): void {
+    const db = getDatabase();
+    db.prepare('DELETE FROM sessions WHERE user_id = ?').run(userId);
+  },
+
+  cleanupExpired(): void {
+    const db = getDatabase();
+    db.prepare('DELETE FROM sessions WHERE expires_at <= ?').run(Date.now());
   },
 };

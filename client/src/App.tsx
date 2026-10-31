@@ -6,9 +6,12 @@ import { UploadModal } from './components/UploadModal.js';
 import { ShareModal } from './components/ShareModal.js';
 import { PreviewModal } from './components/PreviewModal.js';
 import { AuthModal } from './components/AuthModal.js';
+import { SetupScreen } from './components/SetupScreen.js';
+import { LoginScreen } from './components/LoginScreen.js';
+import { DartLogo } from './components/DartLogo.js';
 import { PublicSharePage } from './pages/PublicSharePage.js';
 import { api } from './api.js';
-import { AuthStatus, FileRecord, Folder, Theme } from './types.js';
+import { AppUser, AuthStatus, FileRecord, Folder, SetupStatus, Theme } from './types.js';
 
 export function App() {
   // Check if we are on a public share link route: /s/:slug
@@ -42,6 +45,11 @@ export function App() {
     setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
   };
 
+  // Master Authentication & Onboarding state
+  const [setupStatus, setSetupStatus] = useState<SetupStatus | null>(null);
+  const [currentUser, setCurrentUser] = useState<AppUser | null>(null);
+  const [isAuthChecking, setIsAuthChecking] = useState(true);
+
   // Dashboard state
   const [authStatus, setAuthStatus] = useState<AuthStatus | null>(null);
   const [folders, setFolders] = useState<Folder[]>([]);
@@ -57,7 +65,29 @@ export function App() {
   const [shareTargetFile, setShareTargetFile] = useState<FileRecord | null>(null);
   const [previewTargetFile, setPreviewTargetFile] = useState<FileRecord | null>(null);
 
+  // Check initial master setup & session status
+  const checkMasterAuth = async () => {
+    try {
+      const status = await api.getSetupStatus();
+      setSetupStatus(status);
+      if (status.authenticated && status.user) {
+        setCurrentUser(status.user);
+      } else {
+        setCurrentUser(null);
+      }
+    } catch (err) {
+      console.error('Failed to verify setup status:', err);
+    } finally {
+      setIsAuthChecking(false);
+    }
+  };
+
+  useEffect(() => {
+    checkMasterAuth();
+  }, []);
+
   const handleSync = async () => {
+    if (!currentUser) return;
     setIsSyncing(true);
     try {
       await api.syncFiles();
@@ -71,6 +101,9 @@ export function App() {
       setFiles(loadedFiles);
     } catch (err: unknown) {
       const e = err as Error;
+      if (e.message.includes('401') || e.message.toLowerCase().includes('unauthorized')) {
+        setCurrentUser(null);
+      }
       console.error('Sync failed:', e.message);
     } finally {
       setIsSyncing(false);
@@ -78,6 +111,7 @@ export function App() {
   };
 
   const loadData = async () => {
+    if (!currentUser) return;
     try {
       const folderParam = currentFolderId === '__recent__' ? null : currentFolderId;
       const [status, loadedFolders, loadedFiles] = await Promise.all([
@@ -94,15 +128,73 @@ export function App() {
         setHasInitialSynced(true);
         handleSync();
       }
-    } catch (err) {
+    } catch (err: unknown) {
+      const e = err as Error;
+      if (e.message && (e.message.includes('401') || e.message.toLowerCase().includes('unauthorized'))) {
+        setCurrentUser(null);
+      }
       console.error('Error loading drive data:', err);
     }
   };
 
   useEffect(() => {
-    loadData();
-  }, [currentFolderId, search]);
+    if (currentUser) {
+      loadData();
+    }
+  }, [currentFolderId, search, currentUser]);
 
+  const handleLogout = async () => {
+    try {
+      await api.logout();
+    } catch {
+      // ignore
+    }
+    setCurrentUser(null);
+    setSetupStatus((prev) => (prev ? { ...prev, authenticated: false, user: null } : null));
+    setFolders([]);
+    setFiles([]);
+  };
+
+  const handleAuthComplete = (user: AppUser) => {
+    setCurrentUser(user);
+    setSetupStatus({ needsSetup: false, authenticated: true, user });
+  };
+
+  // 1. Initial Auth Loading State
+  if (isAuthChecking) {
+    return (
+      <div className="min-h-screen w-full flex flex-col items-center justify-center bg-stone-50 dark:bg-stone-950 text-stone-900 dark:text-stone-100 transition-colors">
+        <div className="p-3 rounded-2xl bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 shadow-lg animate-pulse mb-4">
+          <DartLogo size={36} />
+        </div>
+        <p className="text-sm text-stone-500 dark:text-stone-400">Loading Dart...</p>
+      </div>
+    );
+  }
+
+  // 2. First-time Master Account Setup Wizard
+  if (setupStatus?.needsSetup) {
+    return (
+      <SetupScreen
+        onSetupSuccess={handleAuthComplete}
+        theme={theme}
+        onToggleTheme={handleToggleTheme}
+      />
+    );
+  }
+
+  // 3. Returning Master Account Login Gate
+  if (!currentUser) {
+    return (
+      <LoginScreen
+        onLoginSuccess={handleAuthComplete}
+        theme={theme}
+        onToggleTheme={handleToggleTheme}
+      />
+    );
+  }
+
+  // 4. Authenticated Cloud Storage Dashboard
   const handleCreateFolder = async () => {
     const name = window.prompt('Enter folder name:');
     if (name && name.trim()) {
@@ -157,6 +249,8 @@ export function App() {
         authStatus={authStatus}
         theme={theme}
         onToggleTheme={handleToggleTheme}
+        currentUser={currentUser}
+        onLogout={handleLogout}
       />
 
       <div className="flex flex-1 overflow-hidden">

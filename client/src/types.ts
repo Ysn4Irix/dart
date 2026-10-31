@@ -32,6 +32,17 @@ export interface AuthStatus {
 
 export type Theme = 'light' | 'dark';
 
+export interface AppUser {
+  id: string;
+  username: string;
+}
+
+export interface SetupStatus {
+  needsSetup: boolean;
+  authenticated: boolean;
+  user: AppUser | null;
+}
+
 export interface PublicShareDetails {
   id: string;
   fileName: string;

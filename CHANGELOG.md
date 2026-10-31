@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.0] - 2026-10-31
+
+### Added
+- **Single-Owner Master Account Authentication:** Implemented private cloud storage access control requiring master account sign-in before accessing files, folders, and storage features.
+- **First-Time Setup Onboarding Wizard (`<SetupScreen>`):** Automated initial launch setup screen guiding instance owners to configure their master username and master password.
+- **Secure Password Hashing:** Node.js native `crypto.scryptSync` with unique 16-byte cryptographically secure salts and 64-byte derived keys with timing-safe comparisons (`timingSafeEqual`) protecting against timing attacks and GPU cracking.
+- **HTTP-Only Session Management:** Secure, persistent 30-day session tokens backed by SQLite (`users` and `sessions` tables) with dual extraction via HTTP-only cookie (`dart_session`) and `Authorization: Bearer` headers.
+- **Master Account Sign-In Screen (`<LoginScreen>`):** Polished sign-in gate for returning users with error messaging, autofocus, loading states, and full theme synchronization.
+- **Global API Auth Guard:** Fastify `preHandler` hook enforcing strict 401 Unauthorized protection on all internal file and drive endpoints while preserving unauthenticated public access for external share links (`/s/:slug`).
+- **Header User Identity & Sign Out:** Subtle authenticated username indicator and instant sign-out action in the top navigation bar adhering strictly to anti-slop and no-badge UI guidelines.
+
 ## [0.6.0] - 2026-10-30
 
 ### Added

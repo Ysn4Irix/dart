@@ -1,9 +1,58 @@
-import { AuthStatus, FileRecord, Folder, PublicShareDetails, Share } from './types.js';
+import { AppUser, AuthStatus, FileRecord, Folder, PublicShareDetails, SetupStatus, Share } from './types.js';
 
 const API_BASE = '';
 
 export const api = {
-  // Auth
+  // Master Account Authentication
+  async getSetupStatus(): Promise<SetupStatus> {
+    const res = await fetch(`${API_BASE}/api/auth/setup-status`);
+    if (!res.ok) throw new Error('Failed to fetch setup status');
+    return res.json();
+  },
+
+  async registerOwner(username: string, password: string): Promise<{ success: boolean; user: AppUser; token: string }> {
+    const res = await fetch(`${API_BASE}/api/auth/register-owner`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password }),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || 'Failed to create master account');
+    }
+    return res.json();
+  },
+
+  async login(username: string, password: string): Promise<{ success: boolean; user: AppUser; token: string }> {
+    const res = await fetch(`${API_BASE}/api/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password }),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || 'Invalid username or password');
+    }
+    return res.json();
+  },
+
+  async logout(): Promise<{ success: boolean }> {
+    const res = await fetch(`${API_BASE}/api/auth/logout`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({}),
+    });
+    if (!res.ok) throw new Error('Failed to logout');
+    return res.json();
+  },
+
+  async getMe(): Promise<{ authenticated: boolean; user: AppUser }> {
+    const res = await fetch(`${API_BASE}/api/auth/me`);
+    if (!res.ok) throw new Error('Not authenticated');
+    return res.json();
+  },
+
+  // Telegram MTProto Auth
   async getAuthStatus(): Promise<AuthStatus> {
     const res = await fetch(`${API_BASE}/api/auth/status`);
     if (!res.ok) throw new Error('Failed to fetch auth status');

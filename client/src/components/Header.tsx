@@ -1,6 +1,6 @@
 import React from 'react';
-import { Search, UploadCloud, FolderPlus, RefreshCw, Sun, Moon } from 'lucide-react';
-import { AuthStatus, Theme } from '../types.js';
+import { Search, UploadCloud, FolderPlus, RefreshCw, Sun, Moon, LogOut } from 'lucide-react';
+import { AppUser, AuthStatus, Theme } from '../types.js';
 import { DartLogo } from './DartLogo.js';
 
 interface HeaderProps {
@@ -14,6 +14,8 @@ interface HeaderProps {
   authStatus: AuthStatus | null;
   theme: Theme;
   onToggleTheme: () => void;
+  currentUser?: AppUser | null;
+  onLogout?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -27,6 +29,8 @@ export const Header: React.FC<HeaderProps> = ({
   authStatus,
   theme,
   onToggleTheme,
+  currentUser,
+  onLogout,
 }) => {
   return (
     <header className="h-16 border-b border-stone-200 dark:border-stone-800 px-6 flex items-center justify-between bg-white/80 dark:bg-stone-900/80 backdrop-blur sticky top-0 z-10 transition-colors">
@@ -103,6 +107,22 @@ export const Header: React.FC<HeaderProps> = ({
           />
           <span>{authStatus?.authorized ? 'Telegram Connected' : 'Connect Telegram'}</span>
         </button>
+
+        {currentUser && onLogout && (
+          <div className="flex items-center gap-2.5 pl-3 border-l border-stone-200 dark:border-stone-800 text-xs">
+            <span className="text-stone-600 dark:text-stone-400 font-medium">
+              {currentUser.username}
+            </span>
+            <button
+              onClick={onLogout}
+              className="p-1.5 text-stone-500 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-100 hover:bg-stone-100 dark:hover:bg-stone-800 rounded transition-colors cursor-pointer"
+              title="Sign out of master account"
+              aria-label="Sign out"
+            >
+              <LogOut className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        )}
       </div>
     </header>
   );

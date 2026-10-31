@@ -1,11 +1,12 @@
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
 import multipart from '@fastify/multipart';
+import fastifyCookie from '@fastify/cookie';
 import { config } from './config.js';
 import { initDatabase } from './db/index.js';
 import { getTelegramClient } from './telegram/client.js';
 import { syncSavedMessages } from './telegram/sync.js';
-import { authRoutes } from './routes/auth.js';
+import { authRoutes, getSessionFromRequest } from './routes/auth.js';
 import { folderRoutes } from './routes/folders.js';
 import { fileRoutes } from './routes/files.js';
 import { shareRoutes } from './routes/shares.js';
@@ -32,6 +33,43 @@ async function bootstrap() {
       fileSize: 1024 * 1024 * 1024 * 4, // 4GB max file size
       files: 1,
     },
+  });
+
+  await fastify.register(fastifyCookie);
+
+  // Global Auth Guard: Protect internal and cloud storage API routes
+  fastify.addHook('preHandler', async (request, reply) => {
+    const pathname = request.url.split('?')[0];
+
+    // 1. CORS preflight is always permitted
+    if (request.method === 'OPTIONS') {
+      return;
+    }
+
+    // 2. Public auth endpoints needed for setup and signing in
+    if (
+      pathname === '/api/auth/setup-status' ||
+      pathname === '/api/auth/register-owner' ||
+      pathname === '/api/auth/login'
+    ) {
+      return;
+    }
+
+    // 3. Public share links for reading metadata, streaming, and downloading
+    if (
+      request.method === 'GET' &&
+      (pathname.startsWith('/s/') || pathname.startsWith('/api/shares/'))
+    ) {
+      return;
+    }
+
+    // 4. All other /api/* endpoints require a valid authenticated master session
+    if (pathname.startsWith('/api/')) {
+      const auth = getSessionFromRequest(request);
+      if (!auth) {
+        return reply.status(401).send({ error: 'Unauthorized: Master account sign-in required' });
+      }
+    }
   });
 
   // 3. Register Routes
