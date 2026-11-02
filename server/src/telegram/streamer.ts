@@ -70,12 +70,47 @@ export async function streamTelegramFile(
     });
   }
 
-  if (!message || !message.media) {
+  if (!message) {
     fileRepo.updateStatus(file.id, 'missing');
     return reply.status(404).send({
       error: 'File message not found in Telegram Saved Messages',
       status: 'missing',
     });
+  }
+
+  // Handle pure text-based message streaming and downloading
+  if (!message.media) {
+    const rawText = message.message || (typeof message.text === 'string' ? message.text : '');
+    const buffer = Buffer.from(rawText, 'utf8');
+    const totalSize = buffer.length;
+
+    reply.header('Content-Type', file.mime_type || 'text/plain; charset=utf-8');
+    reply.header('Accept-Ranges', 'bytes');
+
+    if (asAttachment) {
+      reply.header('Content-Disposition', `attachment; filename="${encodeURIComponent(file.name)}"`);
+    } else {
+      reply.header('Content-Disposition', `inline; filename="${encodeURIComponent(file.name)}"`);
+    }
+
+    const rangeHeader = request.headers.range;
+    if (rangeHeader) {
+      const range = parseRange(rangeHeader, totalSize);
+      if (!range) {
+        reply.header('Content-Range', `bytes */${totalSize}`);
+        return reply.status(416).send('Requested Range Not Satisfiable');
+      }
+
+      const chunk = buffer.subarray(range.start, range.end + 1);
+      reply.status(206);
+      reply.header('Content-Range', `bytes ${range.start}-${range.end}/${totalSize}`);
+      reply.header('Content-Length', chunk.length);
+      return reply.send(chunk);
+    }
+
+    reply.status(200);
+    reply.header('Content-Length', totalSize);
+    return reply.send(buffer);
   }
 
   const media = message.media;

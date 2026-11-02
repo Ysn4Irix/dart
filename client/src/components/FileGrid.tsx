@@ -373,12 +373,21 @@ export const FileGrid: React.FC<FileGridProps> = ({
     return <FileText className="w-5 h-5 text-stone-400" />;
   };
 
-  const isMedia = (mime: string) => {
+  const isMedia = (mime: string, name = '') => {
+    const lowerName = name.toLowerCase();
     return (
       mime.startsWith('video/') ||
       mime.startsWith('audio/') ||
       mime.startsWith('image/') ||
-      mime === 'application/pdf'
+      mime.startsWith('text/') ||
+      mime === 'application/pdf' ||
+      mime === 'application/json' ||
+      lowerName.endsWith('.txt') ||
+      lowerName.endsWith('.md') ||
+      lowerName.endsWith('.json') ||
+      lowerName.endsWith('.log') ||
+      lowerName.endsWith('.srt') ||
+      lowerName.endsWith('.vcf')
     );
   };
 
@@ -601,7 +610,7 @@ export const FileGrid: React.FC<FileGridProps> = ({
           /* GRID VIEW */
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
             {filteredFiles.map((file) => {
-              const hasPreview = isMedia(file.mime_type);
+              const hasPreview = isMedia(file.mime_type, file.name);
               const isMissing = file.status === 'missing';
               const ext = getFileExtension(file.name);
               const dateInfo = formatFileDate(file.created_at);
@@ -728,7 +737,7 @@ export const FileGrid: React.FC<FileGridProps> = ({
               </thead>
               <tbody className="divide-y divide-stone-100 dark:divide-stone-800/60">
                 {filteredFiles.map((file) => {
-                  const hasPreview = isMedia(file.mime_type);
+                  const hasPreview = isMedia(file.mime_type, file.name);
                   const isMissing = file.status === 'missing';
                   const ext = getFileExtension(file.name);
                   const dateInfo = formatFileDate(file.created_at);

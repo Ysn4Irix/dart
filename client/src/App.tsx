@@ -220,12 +220,27 @@ export function App() {
   };
 
   const handleDeleteFile = async (file: FileRecord) => {
-    if (confirm(`Delete "${file.name}" from drive index?`)) {
+    if (
+      confirm(
+        `Delete "${file.name}"?\nThis will permanently delete it from Dart and your Telegram Saved Messages.`
+      )
+    ) {
+      // 1. Optimistic removal for instant UI response
+      setFiles((prev) => prev.filter((f) => f.id !== file.id));
+      if (previewTargetFile?.id === file.id) {
+        setPreviewTargetFile(null);
+      }
+      if (shareTargetFile?.id === file.id) {
+        setShareTargetFile(null);
+      }
+
       try {
         await api.deleteFile(file.id);
         loadData();
-      } catch (err) {
-        alert('Failed to delete file');
+      } catch (err: unknown) {
+        const e = err as Error;
+        alert(`Failed to delete file: ${e.message}`);
+        loadData();
       }
     }
   };
@@ -299,6 +314,7 @@ export function App() {
         onClose={() => setPreviewTargetFile(null)}
         file={previewTargetFile}
         onDownload={handleDownloadFile}
+        onDelete={handleDeleteFile}
       />
 
       <AuthModal

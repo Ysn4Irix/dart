@@ -1,5 +1,5 @@
 import { getTelegramClient } from './client.js';
-import { fileRepo } from '../db/index.js';
+import { fileRepo, deletedMessageRepo } from '../db/index.js';
 import { withFloodWaitRetry } from './limiter.js';
 
 export interface SyncResult {
@@ -34,14 +34,15 @@ export async function syncSavedMessages(limit = 200): Promise<SyncResult> {
   for (const message of messages) {
     scanned++;
 
-    // Only process messages that carry media
-    if (!message.media) {
+    // 1. Skip if permanently deleted by user in Dart
+    if (deletedMessageRepo.isDeleted(message.id)) {
+      skipped++;
       continue;
     }
 
     const messageDate = message.date ? message.date * 1000 : Date.now();
 
-    // If already indexed, synchronize authentic Telegram timestamp
+    // 2. If already indexed, synchronize authentic Telegram timestamp
     const existing = fileRepo.getByMessageId(message.id);
     if (existing) {
       if (message.date && existing.created_at !== messageDate) {
@@ -50,6 +51,43 @@ export async function syncSavedMessages(limit = 200): Promise<SyncResult> {
       skipped++;
       continue;
     }
+
+    // 3. Handle pure text-based messages (e.g. notes, code snippets, links, keys in Saved Messages)
+    if (!message.media) {
+      const rawText = message.message || (typeof message.text === 'string' ? message.text : '');
+      const text = typeof rawText === 'string' ? rawText.trim() : '';
+
+      // Skip truly empty messages without text
+      if (!text) {
+        skipped++;
+        continue;
+      }
+
+      // Generate a descriptive, clean filename from the first line of the text note
+      const firstLine = text
+        .split('\n')[0]
+        .replace(/[\u0000-\u001f\\/:*?"<>|]/g, '')
+        .trim()
+        .slice(0, 35);
+
+      const fileName = firstLine ? `${firstLine}.txt` : `note_${message.id}.txt`;
+      const size = Math.max(1, Buffer.byteLength(text, 'utf8'));
+
+      fileRepo.create({
+        name: fileName,
+        size,
+        mime_type: 'text/plain; charset=utf-8',
+        folder_id: null,
+        telegram_message_id: message.id,
+        telegram_access_hash: null,
+        created_at: messageDate,
+      });
+
+      added++;
+      continue;
+    }
+
+    // 4. Handle messages with media (documents, photos, audio, video)
 
     const file = message.file;
     const doc = message.document;

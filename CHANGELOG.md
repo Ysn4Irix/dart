@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.1] - 2026-11-02
+
+### Fixed
+- **Permanent Telegram Message Deletion:** `DELETE /api/files/:id` now deletes the underlying message directly from Telegram's Saved Messages (`client.deleteMessages('me', [messageId], { revoke: true })`).
+- **Deleted Messages Tombstone Registry:** Added `deleted_messages` SQLite table and repository (`deletedMessageRepo`) to blacklist deleted message IDs, permanently preventing background or manual sync from resurrecting deleted files.
+- **Optimistic File Deletion:** Instant UI removal in `<FileGrid>` upon deletion confirmation without waiting for network or sync latency, with automatic cleanup of active preview/share modals.
+
+### Added
+- **Text-Based Saved Messages Support:** Ingests and indexes non-media text messages, notes, code snippets, reminders, and links stored in Telegram Saved Messages into standard `.txt` text documents with authentic timestamps and byte sizes.
+- **In-Browser Text Streaming & Viewer:** Full range-supported HTTP streaming for text documents and enhanced `<PreviewModal>` displaying scrollable text content with syntax typography, line wrapping, and one-click "Copy Text" action.
+- **Modal Delete Action:** Quick delete capability directly from within the media/text preview dialog.
+
 ## [0.7.0] - 2026-10-31
 
 ### Added

@@ -4,7 +4,8 @@ import fs from 'node:fs';
 import path from 'node:os';
 import os from 'node:os';
 import { pipeline } from 'node:stream/promises';
-import { fileRepo } from '../db/index.js';
+import { fileRepo, deletedMessageRepo } from '../db/index.js';
+import { getTelegramClient } from '../telegram/client.js';
 import { uploadToSavedMessages } from '../telegram/uploader.js';
 import { streamTelegramFile } from '../telegram/streamer.js';
 import { syncSavedMessages } from '../telegram/sync.js';
@@ -130,10 +131,40 @@ export async function fileRoutes(fastify: FastifyInstance) {
     return { success: true };
   });
 
-  // Delete file record
-  fastify.delete('/api/files/:id', async (request) => {
+  // Delete file record (removes from Telegram Saved Messages and local drive)
+  fastify.delete('/api/files/:id', async (request, reply) => {
     const { id } = request.params as { id: string };
+    const file = fileRepo.get(id);
+    if (!file) {
+      return reply.status(404).send({ error: 'File not found' });
+    }
+
+    // 1. Blacklist message ID so background and manual sync will never re-import it
+    if (file.telegram_message_id) {
+      deletedMessageRepo.add(file.telegram_message_id);
+    }
+
+    // 2. Delete message directly from Telegram Saved Messages
+    let telegramDeleted = false;
+    try {
+      const client = await getTelegramClient();
+      if (client && (await client.isUserAuthorized().catch(() => false))) {
+        await client.deleteMessages('me', [file.telegram_message_id], { revoke: true });
+        telegramDeleted = true;
+      }
+    } catch (err: unknown) {
+      const error = err as Error;
+      fastify.log.warn(
+        `Failed to delete message ${file.telegram_message_id} from Telegram: ${error.message}`
+      );
+    }
+
+    // 3. Remove file from SQLite (cascades to shares)
     fileRepo.delete(id);
-    return { success: true };
+
+    return {
+      success: true,
+      telegramDeleted,
+    };
   });
 }

@@ -113,6 +113,11 @@ export function initDatabase() {
       expires_at INTEGER NOT NULL,
       FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
     );
+
+    CREATE TABLE IF NOT EXISTS deleted_messages (
+      telegram_message_id INTEGER PRIMARY KEY,
+      deleted_at INTEGER NOT NULL
+    );
   `);
 }
 
@@ -266,6 +271,32 @@ export const fileRepo = {
     const db = getDatabase();
     const stmt = db.prepare('DELETE FROM files WHERE id = ?');
     stmt.run(id);
+  },
+};
+
+// ================= Deleted Messages Tombstone =================
+export const deletedMessageRepo = {
+  add(messageId: number): void {
+    const db = getDatabase();
+    const stmt = db.prepare(
+      'INSERT OR REPLACE INTO deleted_messages (telegram_message_id, deleted_at) VALUES (?, ?)'
+    );
+    stmt.run(messageId, Date.now());
+  },
+
+  isDeleted(messageId: number): boolean {
+    const db = getDatabase();
+    const stmt = db.prepare('SELECT 1 FROM deleted_messages WHERE telegram_message_id = ?');
+    const row = stmt.get(messageId);
+    return Boolean(row);
+  },
+
+  getAll(): number[] {
+    const db = getDatabase();
+    const rows = db.prepare('SELECT telegram_message_id FROM deleted_messages').all() as unknown as {
+      telegram_message_id: number;
+    }[];
+    return rows.map((r) => r.telegram_message_id);
   },
 };
 
