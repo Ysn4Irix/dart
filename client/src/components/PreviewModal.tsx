@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   X,
   Download,
@@ -12,6 +12,8 @@ import {
   FileCode,
   Loader2,
   AlertCircle,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react';
 import { FileRecord } from '../types.js';
 import { formatBytes } from '../api.js';
@@ -23,6 +25,8 @@ interface PreviewModalProps {
   onDownload: (file: FileRecord) => void;
   onDelete?: (file: FileRecord) => void;
   onShare?: (file: FileRecord) => void;
+  files?: FileRecord[];
+  onNavigate?: (file: FileRecord) => void;
 }
 
 export type ViewerType = 'image' | 'video' | 'audio' | 'pdf' | 'text' | 'generic';
@@ -104,6 +108,8 @@ export const PreviewModal: React.FC<PreviewModalProps> = ({
   onDownload,
   onDelete,
   onShare,
+  files,
+  onNavigate,
 }) => {
   const [textContent, setTextContent] = useState<string | null>(null);
   const [isLoadingText, setIsLoadingText] = useState(false);
@@ -111,15 +117,37 @@ export const PreviewModal: React.FC<PreviewModalProps> = ({
   const [mediaLoading, setMediaLoading] = useState(true);
   const [mediaError, setMediaError] = useState(false);
 
-  // Keyboard Escape listener
+  const currentIndex = file && files ? files.findIndex((f) => f.id === file.id) : -1;
+  const hasPrev = files && currentIndex > 0;
+  const hasNext = files && currentIndex !== -1 && currentIndex < files.length - 1;
+
+  const handlePrev = () => {
+    if (hasPrev && files && onNavigate) {
+      onNavigate(files[currentIndex - 1]);
+    }
+  };
+
+  const handleNext = () => {
+    if (hasNext && files && onNavigate) {
+      onNavigate(files[currentIndex + 1]);
+    }
+  };
+
+  // Keyboard navigation (Escape, Left Arrow, Right Arrow)
   useEffect(() => {
     if (!isOpen) return;
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
+      if (e.key === 'Escape') {
+        onClose();
+      } else if (e.key === 'ArrowLeft' && hasPrev) {
+        handlePrev();
+      } else if (e.key === 'ArrowRight' && hasNext) {
+        handleNext();
+      }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, onClose]);
+  }, [isOpen, onClose, hasPrev, hasNext, currentIndex, files]);
 
   const viewerType = file ? getFileViewerType(file.mime_type, file.name) : 'generic';
   const streamUrl = file ? `/api/files/${file.id}/stream` : '';
@@ -150,6 +178,11 @@ export const PreviewModal: React.FC<PreviewModalProps> = ({
     }
   }, [file?.id, viewerType]);
 
+  const textLines = useMemo(() => {
+    if (!textContent) return [];
+    return textContent.split('\n');
+  }, [textContent]);
+
   if (!isOpen || !file) return null;
 
   const handleCopyText = async () => {
@@ -177,18 +210,25 @@ export const PreviewModal: React.FC<PreviewModalProps> = ({
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
-      className="fixed inset-0 z-50 bg-black/75 flex items-center justify-center p-4 backdrop-blur-xs transition-opacity"
+      className="fixed inset-0 z-50 bg-black/75 flex items-center justify-center p-3 sm:p-4 backdrop-blur-xs transition-opacity"
       role="dialog"
       aria-modal="true"
       aria-labelledby="preview-modal-title"
     >
       <div className="bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-xl w-full max-w-4xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden transition-colors">
         {/* Header */}
-        <div className="px-6 py-4 border-b border-stone-200 dark:border-stone-800 flex items-center justify-between bg-stone-50/60 dark:bg-stone-900/60">
-          <div className="flex-1 truncate mr-4">
-            <h3 id="preview-modal-title" className="font-semibold text-stone-900 dark:text-stone-100 text-sm truncate" title={file.name}>
-              {file.name}
-            </h3>
+        <div className="px-4 sm:px-6 py-3.5 border-b border-stone-200 dark:border-stone-800 flex items-center justify-between bg-stone-50/60 dark:bg-stone-900/60">
+          <div className="flex-1 truncate mr-3 sm:mr-4">
+            <div className="flex items-center gap-2">
+              <h3 id="preview-modal-title" className="font-semibold text-stone-900 dark:text-stone-100 text-sm truncate" title={file.name}>
+                {file.name}
+              </h3>
+              {files && files.length > 1 && currentIndex !== -1 && (
+                <span className="text-xs text-stone-400 dark:text-stone-500 font-mono shrink-0">
+                  ({currentIndex + 1} of {files.length})
+                </span>
+              )}
+            </div>
             <div className="flex items-center gap-2 text-xs text-stone-500 dark:text-stone-400 mt-0.5">
               <span>{formatBytes(file.size)}</span>
               <span>•</span>
@@ -196,22 +236,22 @@ export const PreviewModal: React.FC<PreviewModalProps> = ({
             </div>
           </div>
 
-          <div className="flex items-center gap-2 sm:gap-2.5">
+          <div className="flex items-center gap-1.5 sm:gap-2">
             {viewerType === 'text' && textContent && (
               <button
                 onClick={handleCopyText}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-stone-100 dark:bg-stone-800 hover:bg-stone-200 dark:hover:bg-stone-700 text-stone-800 dark:text-stone-200 text-xs font-medium rounded-lg border border-stone-200 dark:border-stone-700/60 transition-colors cursor-pointer"
+                className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 bg-stone-100 dark:bg-stone-800 hover:bg-stone-200 dark:hover:bg-stone-700 text-stone-800 dark:text-stone-200 text-xs font-medium rounded-lg border border-stone-200 dark:border-stone-700/60 transition-colors cursor-pointer focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:outline-hidden"
                 title="Copy text content to clipboard"
               >
                 {copied ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
-                <span>{copied ? 'Copied' : 'Copy'}</span>
+                <span className="hidden sm:inline">{copied ? 'Copied' : 'Copy'}</span>
               </button>
             )}
 
             {onShare && (
               <button
                 onClick={() => onShare(file)}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-stone-100 dark:bg-stone-800 hover:bg-stone-200 dark:hover:bg-stone-700 text-stone-800 dark:text-stone-200 text-xs font-medium rounded-lg border border-stone-200 dark:border-stone-700/60 transition-colors cursor-pointer"
+                className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 bg-stone-100 dark:bg-stone-800 hover:bg-stone-200 dark:hover:bg-stone-700 text-stone-800 dark:text-stone-200 text-xs font-medium rounded-lg border border-stone-200 dark:border-stone-700/60 transition-colors cursor-pointer focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:outline-hidden"
                 title="Share link"
               >
                 <Share2 className="w-3.5 h-3.5" />
@@ -221,7 +261,7 @@ export const PreviewModal: React.FC<PreviewModalProps> = ({
 
             <button
               onClick={() => onDownload(file)}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-medium rounded-lg transition-colors cursor-pointer shadow-2xs"
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-medium rounded-lg transition-colors cursor-pointer shadow-2xs focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:outline-hidden"
               title="Download file to device"
             >
               <Download className="w-3.5 h-3.5" />
@@ -231,7 +271,7 @@ export const PreviewModal: React.FC<PreviewModalProps> = ({
             {onDelete && (
               <button
                 onClick={() => onDelete(file)}
-                className="p-1.5 text-stone-400 hover:text-red-500 dark:hover:text-red-400 hover:bg-stone-200/60 dark:hover:bg-stone-800 rounded-md transition-colors cursor-pointer ml-1"
+                className="p-1.5 text-stone-400 hover:text-red-500 dark:hover:text-red-400 hover:bg-stone-200/60 dark:hover:bg-stone-800 rounded-md transition-colors cursor-pointer ml-1 focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:outline-hidden"
                 title="Delete file"
                 aria-label="Delete file"
               >
@@ -241,7 +281,7 @@ export const PreviewModal: React.FC<PreviewModalProps> = ({
 
             <button
               onClick={onClose}
-              className="p-1.5 text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 hover:bg-stone-200/60 dark:hover:bg-stone-800 rounded-md transition-colors cursor-pointer"
+              className="p-1.5 text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 hover:bg-stone-200/60 dark:hover:bg-stone-800 rounded-md transition-colors cursor-pointer focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:outline-hidden"
               title="Close viewer (Esc)"
               aria-label="Close viewer"
             >
@@ -250,8 +290,31 @@ export const PreviewModal: React.FC<PreviewModalProps> = ({
           </div>
         </div>
 
-        {/* Viewer Content Area */}
-        <div className="flex-1 overflow-auto bg-stone-100 dark:bg-stone-950 flex items-center justify-center p-4 sm:p-6 min-h-[420px] relative">
+        {/* Viewer Content Area with Nav Chevrons */}
+        <div className="flex-1 overflow-auto bg-stone-100 dark:bg-stone-950 flex items-center justify-center p-3 sm:p-6 min-h-[420px] relative group">
+          {/* Previous File Button */}
+          {hasPrev && (
+            <button
+              onClick={handlePrev}
+              className="absolute left-2 sm:left-4 z-20 p-2 sm:p-2.5 rounded-full bg-white/90 dark:bg-stone-900/90 hover:bg-white dark:hover:bg-stone-800 text-stone-700 dark:text-stone-300 shadow-md border border-stone-200 dark:border-stone-700 transition-all cursor-pointer focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:outline-hidden"
+              title="Previous file (Left Arrow)"
+              aria-label="Previous file"
+            >
+              <ChevronLeft className="w-5 h-5" />
+            </button>
+          )}
+
+          {/* Next File Button */}
+          {hasNext && (
+            <button
+              onClick={handleNext}
+              className="absolute right-2 sm:right-4 z-20 p-2 sm:p-2.5 rounded-full bg-white/90 dark:bg-stone-900/90 hover:bg-white dark:hover:bg-stone-800 text-stone-700 dark:text-stone-300 shadow-md border border-stone-200 dark:border-stone-700 transition-all cursor-pointer focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:outline-hidden"
+              title="Next file (Right Arrow)"
+              aria-label="Next file"
+            >
+              <ChevronRight className="w-5 h-5" />
+            </button>
+          )}
           {/* 1. Image Viewer */}
           {viewerType === 'image' && (
             <div className="relative max-h-[70vh] max-w-full flex items-center justify-center">
@@ -369,16 +432,27 @@ export const PreviewModal: React.FC<PreviewModalProps> = ({
                 </div>
                 <span>UTF-8</span>
               </div>
-              <div className="flex-1 overflow-auto p-4">
+              <div className="flex-1 overflow-auto p-4 flex font-mono text-xs">
                 {isLoadingText ? (
-                  <div className="h-48 flex flex-col items-center justify-center gap-2 text-xs text-stone-400">
+                  <div className="h-48 w-full flex flex-col items-center justify-center gap-2 text-xs text-stone-400">
                     <Loader2 className="w-5 h-5 animate-spin text-emerald-500" />
                     <span>Loading document text...</span>
                   </div>
                 ) : (
-                  <pre className="font-mono text-xs text-stone-800 dark:text-stone-200 whitespace-pre-wrap break-words leading-relaxed select-text">
-                    {textContent || ''}
-                  </pre>
+                  <div className="flex w-full">
+                    {/* Line Numbers */}
+                    {textLines.length > 0 && (
+                      <div className="select-none text-stone-400 dark:text-stone-600 text-right pr-4 border-r border-stone-200 dark:border-stone-800 space-y-0.5 leading-relaxed shrink-0">
+                        {textLines.map((_, i) => (
+                          <div key={i}>{i + 1}</div>
+                        ))}
+                      </div>
+                    )}
+                    {/* Text Body */}
+                    <pre className="pl-4 whitespace-pre-wrap break-words leading-relaxed select-text text-stone-800 dark:text-stone-200 flex-1">
+                      {textContent || ''}
+                    </pre>
+                  </div>
                 )}
               </div>
             </div>

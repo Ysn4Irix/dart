@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.1] - 2026-11-02
+
+### Enhanced
+- **Responsive Mobile Navigation & Drawer:** Added mobile slide-out drawer navigation for `<Sidebar>` triggered by a hamburger button in `<Header>`, ensuring small-screen users can browse folders and inspect storage statistics without layout overflow.
+- **Adaptive Header Layout:** Responsive action button collapse for mobile viewports, shrinking button labels to clear icon targets on narrow viewports while maintaining accessible `aria-label`s.
+- **Global Drag-and-Drop File Upload:** Direct file dropping anywhere in the application window brings up a focused drop overlay, seamlessly staging dropped files into `<UploadModal>` for immediate upload.
+- **Rapid Keyboard Search (`Cmd+K` / `Ctrl+K`):** Global shortcut instantly focuses the search input from any view; added an inline clear button and escape key binding.
+- **Sequential File Carousel & Code Viewer (`<PreviewModal>`):** Added Left/Right file navigation buttons, keyboard arrow navigation (`ArrowLeft` / `ArrowRight`), active file position counter (`File X of Y`), and line-numbered presentation for text/source files.
+- **Refined Empty Search Feedback:** Tailored empty search state in `<FileGrid>` explaining zero-match queries with a one-click "Clear Search" button.
+- **Accessibility & antislop Compliance:** Applied consistent `focus-visible` emerald rings, WCAG AA contrast adjustments for secondary text, smooth custom scrollbars, and verified complete absence of decorative badges/pills.
+
 ## [0.9.0] - 2026-11-02
 
 ### Added

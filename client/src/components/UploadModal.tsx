@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { X, UploadCloud, File as FileIcon, Loader2 } from 'lucide-react';
 import { api, formatBytes } from '../api.js';
 
@@ -7,6 +7,7 @@ interface UploadModalProps {
   onClose: () => void;
   folderId: string | null;
   onUploadComplete: () => void;
+  initialFile?: File | null;
 }
 
 export const UploadModal: React.FC<UploadModalProps> = ({
@@ -14,12 +15,35 @@ export const UploadModal: React.FC<UploadModalProps> = ({
   onClose,
   folderId,
   onUploadComplete,
+  initialFile,
 }) => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (isOpen) {
+      if (initialFile) {
+        setSelectedFile(initialFile);
+      } else {
+        setSelectedFile(null);
+      }
+      setIsUploading(false);
+      setProgress(0);
+      setError(null);
+    }
+  }, [isOpen, initialFile]);
+
+  useEffect(() => {
+    if (!isOpen || isUploading) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, isUploading, onClose]);
 
   if (!isOpen) return null;
 

@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { UploadCloud } from 'lucide-react';
 import { Header } from './components/Header.js';
 import { Sidebar } from './components/Sidebar.js';
 import { FileGrid } from './components/FileGrid.js';
@@ -66,6 +67,72 @@ export function App() {
   const [hasInitialSynced, setHasInitialSynced] = useState(false);
   const [shareTargetFile, setShareTargetFile] = useState<FileRecord | null>(null);
   const [previewTargetFile, setPreviewTargetFile] = useState<FileRecord | null>(null);
+  const [previewFileList, setPreviewFileList] = useState<FileRecord[]>([]);
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+  const [isDraggingGlobal, setIsDraggingGlobal] = useState(false);
+  const [droppedFile, setDroppedFile] = useState<File | null>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+
+  // Global keyboard shortcuts (Cmd+K / Ctrl+K for search)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        searchInputRef.current?.focus();
+        searchInputRef.current?.select();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
+  // Global Drag-and-Drop file upload listener
+  useEffect(() => {
+    let dragCounter = 0;
+
+    const handleDragEnter = (e: DragEvent) => {
+      e.preventDefault();
+      dragCounter++;
+      if (e.dataTransfer?.types.includes('Files')) {
+        setIsDraggingGlobal(true);
+      }
+    };
+
+    const handleDragLeave = (e: DragEvent) => {
+      e.preventDefault();
+      dragCounter--;
+      if (dragCounter <= 0) {
+        setIsDraggingGlobal(false);
+        dragCounter = 0;
+      }
+    };
+
+    const handleDragOver = (e: DragEvent) => {
+      e.preventDefault();
+    };
+
+    const handleDrop = (e: DragEvent) => {
+      e.preventDefault();
+      dragCounter = 0;
+      setIsDraggingGlobal(false);
+      if (e.dataTransfer?.files && e.dataTransfer.files[0]) {
+        setDroppedFile(e.dataTransfer.files[0]);
+        setIsUploadOpen(true);
+      }
+    };
+
+    window.addEventListener('dragenter', handleDragEnter);
+    window.addEventListener('dragleave', handleDragLeave);
+    window.addEventListener('dragover', handleDragOver);
+    window.addEventListener('drop', handleDrop);
+
+    return () => {
+      window.removeEventListener('dragenter', handleDragEnter);
+      window.removeEventListener('dragleave', handleDragLeave);
+      window.removeEventListener('dragover', handleDragOver);
+      window.removeEventListener('drop', handleDrop);
+    };
+  }, []);
 
   // Check initial master setup & session status
   const checkMasterAuth = async () => {
@@ -360,7 +427,10 @@ export function App() {
       <Header
         search={search}
         onSearchChange={setSearch}
-        onOpenUpload={() => setIsUploadOpen(true)}
+        onOpenUpload={() => {
+          setDroppedFile(null);
+          setIsUploadOpen(true);
+        }}
         onOpenNewFolder={handleCreateFolder}
         onOpenAuth={() => setIsAuthOpen(true)}
         onSync={handleSync}
@@ -370,9 +440,11 @@ export function App() {
         onToggleTheme={handleToggleTheme}
         currentUser={currentUser}
         onLogout={handleLogout}
+        onToggleMobileSidebar={() => setIsMobileSidebarOpen((prev) => !prev)}
+        searchInputRef={searchInputRef}
       />
 
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex flex-1 overflow-hidden relative">
         <Sidebar
           folders={folders}
           currentFolderId={currentFolderId}
@@ -381,6 +453,8 @@ export function App() {
           onNewFolder={handleCreateFolder}
           totalFilesCount={files.length}
           totalSize={totalSize}
+          isMobileOpen={isMobileSidebarOpen}
+          onCloseMobile={() => setIsMobileSidebarOpen(false)}
         />
 
         <FileGrid
@@ -390,7 +464,10 @@ export function App() {
           searchQuery={search}
           onClearSearch={() => setSearch('')}
           onNavigateFolder={setCurrentFolderId}
-          onPreview={(f) => setPreviewTargetFile(f)}
+          onPreview={(f, list) => {
+            setPreviewTargetFile(f);
+            setPreviewFileList(list || files);
+          }}
           onDownload={handleDownloadFile}
           onShare={(f) => setShareTargetFile(f)}
           onDelete={handleDeleteFile}
@@ -403,12 +480,34 @@ export function App() {
         />
       </div>
 
+      {/* Global Drag and Drop Overlay */}
+      {isDraggingGlobal && (
+        <div className="fixed inset-0 z-50 bg-emerald-950/30 dark:bg-emerald-950/50 backdrop-blur-xs flex items-center justify-center p-6 border-4 border-dashed border-emerald-500 pointer-events-none transition-all">
+          <div className="bg-white dark:bg-stone-900 rounded-2xl shadow-2xl p-8 border border-emerald-500/40 text-center space-y-3">
+            <UploadCloud className="w-12 h-12 text-emerald-500 mx-auto animate-bounce" />
+            <div className="text-lg font-semibold text-stone-900 dark:text-stone-100">
+              Drop files to upload to Saved Messages
+            </div>
+            <div className="text-xs text-stone-500 dark:text-stone-400">
+              Release anywhere to upload into {currentFolderId ? 'the active folder' : 'All Files'}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Modals */}
       <UploadModal
         isOpen={isUploadOpen}
-        onClose={() => setIsUploadOpen(false)}
+        onClose={() => {
+          setIsUploadOpen(false);
+          setDroppedFile(null);
+        }}
+        initialFile={droppedFile}
         folderId={currentFolderId}
-        onUploadComplete={loadData}
+        onUploadComplete={() => {
+          setDroppedFile(null);
+          loadData();
+        }}
       />
 
       <ShareModal
@@ -421,6 +520,8 @@ export function App() {
         isOpen={Boolean(previewTargetFile)}
         onClose={() => setPreviewTargetFile(null)}
         file={previewTargetFile}
+        files={previewFileList}
+        onNavigate={(f) => setPreviewTargetFile(f)}
         onDownload={handleDownloadFile}
         onDelete={handleDeleteFile}
         onShare={(f) => setShareTargetFile(f)}

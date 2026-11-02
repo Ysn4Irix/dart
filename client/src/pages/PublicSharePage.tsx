@@ -133,7 +133,7 @@ export const PublicSharePage: React.FC<PublicSharePageProps> = ({ slug }) => {
         <div className="pt-2 flex flex-col sm:flex-row gap-3">
           <a
             href={details.downloadUrl}
-            className="flex-1 flex items-center justify-center gap-2 py-3 px-6 bg-emerald-600 hover:bg-emerald-500 text-white font-medium text-sm rounded-xl transition-colors shadow-lg shadow-emerald-950/20"
+            className="flex-1 flex items-center justify-center gap-2 py-3 px-6 bg-emerald-600 hover:bg-emerald-500 text-white font-medium text-sm rounded-xl transition-colors shadow-lg shadow-emerald-950/20 focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:outline-hidden"
           >
             <Download className="w-4 h-4" />
             <span>Download File</span>
@@ -141,7 +141,7 @@ export const PublicSharePage: React.FC<PublicSharePageProps> = ({ slug }) => {
 
           <a
             href={telegramShareLink}
-            className="flex items-center justify-center gap-2 py-3 px-5 bg-stone-100 dark:bg-stone-800 hover:bg-stone-200 dark:hover:bg-stone-700 text-stone-800 dark:text-stone-200 text-sm font-medium rounded-xl border border-stone-200 dark:border-stone-700/60 transition-colors"
+            className="flex items-center justify-center gap-2 py-3 px-5 bg-stone-100 dark:bg-stone-800 hover:bg-stone-200 dark:hover:bg-stone-700 text-stone-800 dark:text-stone-200 text-sm font-medium rounded-xl border border-stone-200 dark:border-stone-700/60 transition-colors focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:outline-hidden"
           >
             <Send className="w-4 h-4 text-sky-600 dark:text-sky-400" />
             <span>Open in Telegram</span>

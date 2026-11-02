@@ -129,7 +129,7 @@ interface FileGridProps {
   searchQuery?: string;
   onClearSearch?: () => void;
   onNavigateFolder: (id: string | null) => void;
-  onPreview: (file: FileRecord) => void;
+  onPreview: (file: FileRecord, activeList?: FileRecord[]) => void;
   onDownload: (file: FileRecord) => void;
   onShare: (file: FileRecord) => void;
   onDelete: (file: FileRecord) => void;
@@ -696,26 +696,43 @@ export const FileGrid: React.FC<FileGridProps> = ({
             )}
           </div>
         ) : filteredFiles.length === 0 ? (
-          /* Filter Return Zero State */
+          /* Filter / Search Return Zero State */
           <div className="h-64 flex flex-col items-center justify-center text-center text-stone-500 border border-dashed border-stone-300 dark:border-stone-800 rounded-xl p-6 bg-stone-50/50 dark:bg-transparent">
             <FileText className="w-10 h-10 mb-3 text-stone-400 dark:text-stone-600" />
-            <div className="text-stone-800 dark:text-stone-300 font-medium">No files match this filter</div>
-            <div className="text-xs text-stone-500 mt-1 max-w-sm mb-4">
-              {selectedCategory !== 'all' && selectedDateFilter !== 'all'
-                ? `No files found in "${CATEGORIES.find((c) => c.id === selectedCategory)?.label}" within ${DATE_FILTERS.find((d) => d.id === selectedDateFilter)?.shortLabel.toLowerCase()}.`
-                : selectedDateFilter !== 'all'
-                ? `No files found within ${DATE_FILTERS.find((d) => d.id === selectedDateFilter)?.shortLabel.toLowerCase()}.`
-                : `No files found in "${CATEGORIES.find((c) => c.id === selectedCategory)?.label}".`}
+            <div className="text-stone-800 dark:text-stone-200 font-medium text-sm">
+              {searchQuery ? `No files found matching "${searchQuery}"` : 'No files match this filter'}
             </div>
-            <button
-              onClick={() => {
-                setSelectedCategory('all');
-                setSelectedDateFilter('all');
-              }}
-              className="px-3.5 py-1.5 bg-stone-100 dark:bg-stone-800 hover:bg-stone-200 dark:hover:bg-stone-700 text-stone-800 dark:text-stone-200 text-xs font-medium rounded-lg border border-stone-300 dark:border-stone-700 transition-colors cursor-pointer shadow-2xs"
-            >
-              Reset All Filters
-            </button>
+            <div className="text-xs text-stone-500 dark:text-stone-400 mt-1 max-w-sm mb-4 leading-relaxed">
+              {searchQuery ? (
+                <span>Check the spelling or try searching for another keyword or file extension.</span>
+              ) : selectedCategory !== 'all' && selectedDateFilter !== 'all' ? (
+                `No files found in "${CATEGORIES.find((c) => c.id === selectedCategory)?.label}" within ${DATE_FILTERS.find((d) => d.id === selectedDateFilter)?.shortLabel.toLowerCase()}.`
+              ) : selectedDateFilter !== 'all' ? (
+                `No files found within ${DATE_FILTERS.find((d) => d.id === selectedDateFilter)?.shortLabel.toLowerCase()}.`
+              ) : (
+                `No files found in "${CATEGORIES.find((c) => c.id === selectedCategory)?.label}".`
+              )}
+            </div>
+            <div className="flex items-center gap-2">
+              {searchQuery && onClearSearch && (
+                <button
+                  onClick={onClearSearch}
+                  className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-medium rounded-lg transition-colors cursor-pointer shadow-2xs focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:outline-hidden"
+                >
+                  Clear Search
+                </button>
+              )}
+              <button
+                onClick={() => {
+                  if (onClearSearch) onClearSearch();
+                  setSelectedCategory('all');
+                  setSelectedDateFilter('all');
+                }}
+                className="px-3.5 py-1.5 bg-stone-100 dark:bg-stone-800 hover:bg-stone-200 dark:hover:bg-stone-700 text-stone-800 dark:text-stone-200 text-xs font-medium rounded-lg border border-stone-300 dark:border-stone-700 transition-colors cursor-pointer shadow-2xs focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:outline-hidden"
+              >
+                Reset All Filters
+              </button>
+            </div>
           </div>
         ) : viewMode === 'grid' ? (
           /* GRID VIEW */
@@ -729,7 +746,7 @@ export const FileGrid: React.FC<FileGridProps> = ({
               return (
                 <div
                   key={file.id}
-                  onClick={() => !isMissing && onPreview(file)}
+                  onClick={() => !isMissing && onPreview(file, filteredFiles)}
                   className={`group relative rounded-xl p-4 shadow-2xs hover:shadow-xs transition-all flex flex-col justify-between cursor-pointer border ${
                     isSelected
                       ? 'border-emerald-500 dark:border-emerald-500 bg-emerald-50/20 dark:bg-emerald-950/20 ring-1 ring-emerald-500/30'
@@ -778,7 +795,7 @@ export const FileGrid: React.FC<FileGridProps> = ({
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
-                              onPreview(file);
+                              onPreview(file, filteredFiles);
                             }}
                             className="p-1.5 text-stone-500 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-100 hover:bg-stone-200/60 dark:hover:bg-stone-700/60 rounded-md transition-colors cursor-pointer"
                             title="View file"
@@ -933,7 +950,7 @@ export const FileGrid: React.FC<FileGridProps> = ({
                   return (
                     <tr
                       key={file.id}
-                      onClick={() => !isMissing && onPreview(file)}
+                      onClick={() => !isMissing && onPreview(file, filteredFiles)}
                       className={`transition-colors group cursor-pointer ${
                         isSelected
                           ? 'bg-emerald-50/40 dark:bg-emerald-950/30 hover:bg-emerald-50/60 dark:hover:bg-emerald-950/40'
@@ -1022,7 +1039,7 @@ export const FileGrid: React.FC<FileGridProps> = ({
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
-                                onPreview(file);
+                                onPreview(file, filteredFiles);
                               }}
                               className="p-1.5 text-stone-500 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-100 hover:bg-stone-200/60 dark:hover:bg-stone-700/60 rounded-md transition-colors cursor-pointer"
                               title="View file"

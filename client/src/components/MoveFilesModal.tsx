@@ -115,7 +115,7 @@ export const MoveFilesModal: React.FC<MoveFilesModalProps> = ({
 
           <button
             onClick={onClose}
-            className="p-1 text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 rounded-lg transition-colors cursor-pointer"
+            className="p-1 text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 rounded-lg transition-colors cursor-pointer focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:outline-hidden"
             aria-label="Close"
           >
             <X className="w-5 h-5" />
@@ -128,7 +128,7 @@ export const MoveFilesModal: React.FC<MoveFilesModalProps> = ({
           <button
             onClick={handleCreateNewFolder}
             disabled={isCreatingFolder}
-            className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 rounded-lg transition-colors cursor-pointer"
+            className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 rounded-lg transition-colors cursor-pointer focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:outline-hidden"
           >
             {isCreatingFolder ? (
               <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -145,7 +145,7 @@ export const MoveFilesModal: React.FC<MoveFilesModalProps> = ({
           <button
             type="button"
             onClick={() => setSelectedFolderId(null)}
-            className={`w-full flex items-center justify-between p-3 rounded-xl border transition-all text-left cursor-pointer ${
+            className={`w-full flex items-center justify-between p-3 rounded-xl border transition-all text-left cursor-pointer focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:outline-hidden ${
               selectedFolderId === null
                 ? 'bg-emerald-50/70 dark:bg-emerald-950/30 border-emerald-500/50 dark:border-emerald-500/40 text-stone-900 dark:text-stone-100 shadow-2xs'
                 : 'bg-white dark:bg-stone-800/40 border-stone-200 dark:border-stone-800 text-stone-700 dark:text-stone-300 hover:bg-stone-50 dark:hover:bg-stone-800/70'
@@ -156,7 +156,7 @@ export const MoveFilesModal: React.FC<MoveFilesModalProps> = ({
               <div>
                 <div className="text-xs font-medium">Root Drive (All Files)</div>
                 {currentFolderId === null && (
-                  <div className="text-[11px] text-stone-400 dark:text-stone-500">Current location</div>
+                  <div className="text-[11px] text-stone-500 dark:text-stone-400">Current location</div>
                 )}
               </div>
             </div>
@@ -175,7 +175,7 @@ export const MoveFilesModal: React.FC<MoveFilesModalProps> = ({
                 key={folder.id}
                 type="button"
                 onClick={() => setSelectedFolderId(folder.id)}
-                className={`w-full flex items-center justify-between p-3 rounded-xl border transition-all text-left cursor-pointer ${
+                className={`w-full flex items-center justify-between p-3 rounded-xl border transition-all text-left cursor-pointer focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:outline-hidden ${
                   isSelected
                     ? 'bg-emerald-50/70 dark:bg-emerald-950/30 border-emerald-500/50 dark:border-emerald-500/40 text-stone-900 dark:text-stone-100 shadow-2xs'
                     : 'bg-white dark:bg-stone-800/40 border-stone-200 dark:border-stone-800 text-stone-700 dark:text-stone-300 hover:bg-stone-50 dark:hover:bg-stone-800/70'
@@ -186,7 +186,7 @@ export const MoveFilesModal: React.FC<MoveFilesModalProps> = ({
                   <div className="truncate">
                     <div className="text-xs font-medium truncate">{folder.name}</div>
                     {isCurrent && (
-                      <div className="text-[11px] text-stone-400 dark:text-stone-500">Current location</div>
+                      <div className="text-[11px] text-stone-500 dark:text-stone-400">Current location</div>
                     )}
                   </div>
                 </div>
@@ -204,7 +204,7 @@ export const MoveFilesModal: React.FC<MoveFilesModalProps> = ({
             type="button"
             onClick={onClose}
             disabled={isSubmitting}
-            className="px-4 py-2 text-xs font-medium text-stone-600 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-100 hover:bg-stone-200/60 dark:hover:bg-stone-800 rounded-lg transition-colors cursor-pointer"
+            className="px-4 py-2 text-xs font-medium text-stone-600 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-100 hover:bg-stone-200/60 dark:hover:bg-stone-800 rounded-lg transition-colors cursor-pointer focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:outline-hidden"
           >
             Cancel
           </button>
@@ -212,7 +212,7 @@ export const MoveFilesModal: React.FC<MoveFilesModalProps> = ({
             type="button"
             onClick={handleMove}
             disabled={isSubmitting || selectedFolderId === currentFolderId}
-            className="flex items-center gap-2 px-4 py-2 text-xs font-medium bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg transition-colors cursor-pointer shadow-xs disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex items-center gap-2 px-4 py-2 text-xs font-medium bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg transition-colors cursor-pointer shadow-xs disabled:opacity-50 disabled:cursor-not-allowed focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:outline-hidden"
           >
             {isSubmitting && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
             <span>{isSubmitting ? 'Moving...' : 'Move Here'}</span>
