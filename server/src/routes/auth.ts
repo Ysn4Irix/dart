@@ -87,6 +87,51 @@ export async function authRoutes(fastify: FastifyInstance) {
     };
   });
 
+  // Register a new user account (Multi-user support)
+  fastify.post('/api/auth/register', async (request, reply) => {
+    const schema = z.object({
+      username: z
+        .string()
+        .min(3, 'Username must be at least 3 characters')
+        .max(30, 'Username cannot exceed 30 characters')
+        .regex(/^[a-zA-Z0-9_-]+$/, 'Username can only contain letters, numbers, hyphens, and underscores'),
+      password: z.string().min(6, 'Password must be at least 6 characters').max(100),
+    });
+
+    const parsed = schema.safeParse(request.body);
+    if (!parsed.success) {
+      const msg = parsed.error.issues.map((i) => i.message).join(', ');
+      return reply.status(400).send({ error: msg });
+    }
+
+    const { username, password } = parsed.data;
+    const cleanUsername = username.trim();
+
+    // Check if username is already taken (case-insensitive)
+    const existing = userRepo.getByUsername(cleanUsername);
+    if (existing) {
+      return reply.status(400).send({ error: 'Username is already taken. Please choose another.' });
+    }
+
+    const { hash, salt } = hashPassword(password);
+    const user = userRepo.create(cleanUsername, hash, salt);
+    const session = sessionRepo.create(user.id, 30);
+
+    reply.setCookie('dart_session', session.id, {
+      path: '/',
+      httpOnly: true,
+      secure: false, // works on localhost / LAN
+      sameSite: 'lax',
+      maxAge: 30 * 24 * 3600, // 30 days
+    });
+
+    return {
+      success: true,
+      user: { id: user.id, username: user.username },
+      token: session.id,
+    };
+  });
+
   // Sign in to master account
   fastify.post('/api/auth/login', async (request, reply) => {
     const schema = z.object({

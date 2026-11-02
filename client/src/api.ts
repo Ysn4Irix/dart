@@ -23,6 +23,19 @@ export const api = {
     return res.json();
   },
 
+  async register(username: string, password: string): Promise<{ success: boolean; user: AppUser; token: string }> {
+    const res = await fetch(`${API_BASE}/api/auth/register`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password }),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || 'Failed to create account');
+    }
+    return res.json();
+  },
+
   async login(username: string, password: string): Promise<{ success: boolean; user: AppUser; token: string }> {
     const res = await fetch(`${API_BASE}/api/auth/login`, {
       method: 'POST',

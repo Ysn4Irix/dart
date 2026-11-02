@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.11.0] - 2026-11-02
+
+### Added
+- **Multi-User Registration Endpoint (`POST /api/auth/register`):** Added backend registration allowing multiple independent user accounts to register with username validation (3-30 characters, alphanumeric/dashes/underscores) and case-insensitive uniqueness checks.
+- **Interactive Login & Registration Mode Switcher (`<LoginScreen>`):** Enhanced the login gate with a seamless mode switcher between "Sign In" (for existing accounts) and "Create Account" (for new users). Includes password confirmation and unrecoverable credentials acknowledgment.
+- **Setup-to-Login Navigation Flow (`<SetupScreen>` & `<App>`):** Added an "Already have an account? Sign in" shortcut on the initial setup screen, enabling users with pre-existing database accounts or re-deployments to bypass setup and authenticate immediately.
+- **Multi-User Authentication Suite (`server/test/auth.test.ts`):** Added comprehensive unit test suite verifying multi-user creation, case-insensitive username retrieval, distinct password verification, and session lifecycle isolation.
+
 ## [0.10.6] - 2026-11-02
 
 ### Fixed

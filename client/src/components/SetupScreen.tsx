@@ -6,12 +6,14 @@ import { AppUser, Theme } from '../types.js';
 
 interface SetupScreenProps {
   onSetupSuccess: (user: AppUser) => void;
+  onSwitchToLogin?: () => void;
   theme: Theme;
   onToggleTheme: () => void;
 }
 
 export const SetupScreen: React.FC<SetupScreenProps> = ({
   onSetupSuccess,
+  onSwitchToLogin,
   theme,
   onToggleTheme,
 }) => {
@@ -237,6 +239,18 @@ export const SetupScreen: React.FC<SetupScreenProps> = ({
               <span>{isLoading ? 'Creating Master Account...' : 'Complete Setup & Enter Dart'}</span>
               <ArrowRight className="w-4 h-4" />
             </button>
+
+            {onSwitchToLogin && (
+              <div className="text-center pt-2">
+                <button
+                  type="button"
+                  onClick={onSwitchToLogin}
+                  className="text-xs text-stone-600 dark:text-stone-400 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors cursor-pointer"
+                >
+                  Already have an account? <span className="underline font-medium">Sign in</span>
+                </button>
+              </div>
+            )}
           </form>
         </div>
       </main>

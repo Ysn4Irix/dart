@@ -52,6 +52,7 @@ export function App() {
   const [setupStatus, setSetupStatus] = useState<SetupStatus | null>(null);
   const [currentUser, setCurrentUser] = useState<AppUser | null>(null);
   const [isAuthChecking, setIsAuthChecking] = useState(true);
+  const [authViewMode, setAuthViewMode] = useState<'auto' | 'setup' | 'login'>('auto');
 
   // Dashboard state
   const [authStatus, setAuthStatus] = useState<AuthStatus | null>(null);
@@ -242,21 +243,24 @@ export function App() {
   }
 
   // 2. First-time Master Account Setup Wizard
-  if (setupStatus?.needsSetup) {
+  if (setupStatus?.needsSetup && authViewMode !== 'login') {
     return (
       <SetupScreen
         onSetupSuccess={handleAuthComplete}
+        onSwitchToLogin={() => setAuthViewMode('login')}
         theme={theme}
         onToggleTheme={handleToggleTheme}
       />
     );
   }
 
-  // 3. Returning Master Account Login Gate
+  // 3. User Authentication Gate (Login with existing account or register new)
   if (!currentUser) {
     return (
       <LoginScreen
         onLoginSuccess={handleAuthComplete}
+        initialMode="login"
+        onSwitchToSetup={setupStatus?.needsSetup ? () => setAuthViewMode('setup') : undefined}
         theme={theme}
         onToggleTheme={handleToggleTheme}
       />
