@@ -93,6 +93,25 @@
 
 ---
 
+## Deployment (Docker & Dokploy)
+
+Dart includes first-class support for **[Dokploy](https://dokploy.com/)** and standard Docker Compose deployments.
+
+### Using Docker Compose
+```bash
+# Build and start in detached mode
+docker compose up -d
+```
+The application will be live at `http://localhost:4000`.
+
+### Dokploy 1-Click Setup
+1. In Dokploy, create a new service and select **Compose**.
+2. Point to this repository's Git URL.
+3. Configure your domain (e.g. `dart.yourdomain.com`) pointing to container port `4000`.
+4. Deploy! Full setup instructions can be found in [docs/dokploy.md](docs/dokploy.md).
+
+---
+
 ## Continuous Integration & Release Policy
 
 - **Automated CI Workflow (`.github/workflows/ci.yml`):**

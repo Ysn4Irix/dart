@@ -1,7 +1,10 @@
+import path from 'node:path';
+import fs from 'node:fs';
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
 import multipart from '@fastify/multipart';
 import fastifyCookie from '@fastify/cookie';
+import fastifyStatic from '@fastify/static';
 import { config } from './config.js';
 import { initDatabase } from './db/index.js';
 import { getTelegramClient } from './telegram/client.js';
@@ -78,7 +81,35 @@ async function bootstrap() {
   await fastify.register(fileRoutes);
   await fastify.register(shareRoutes);
 
-  // 4. Background Telegram Connection (if configured)
+  // 4. Serve Static Frontend (Production / Docker mode)
+  const clientDistPaths = [
+    process.env.CLIENT_DIST,
+    path.resolve(process.cwd(), '../client/dist'),
+    path.resolve(process.cwd(), 'client/dist'),
+    path.resolve(process.cwd(), 'dist/client'),
+  ].filter(Boolean) as string[];
+
+  const clientDist = clientDistPaths.find((p) => fs.existsSync(p));
+
+  if (clientDist) {
+    fastify.log.info(`Serving static client assets from: ${clientDist}`);
+    await fastify.register(fastifyStatic, {
+      root: clientDist,
+      prefix: '/',
+      wildcard: false,
+    });
+
+    // SPA fallback: any non-API route serves index.html
+    fastify.setNotFoundHandler(async (request, reply) => {
+      const pathname = request.url.split('?')[0];
+      if (pathname.startsWith('/api/')) {
+        return reply.status(404).send({ error: 'Endpoint not found' });
+      }
+      return reply.sendFile('index.html');
+    });
+  }
+
+  // 5. Background Telegram Connection (if configured)
   if (config.telegram.apiId && config.telegram.apiHash) {
     getTelegramClient()
       .then(async (client) => {

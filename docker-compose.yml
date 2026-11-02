@@ -1,0 +1,49 @@
+# ========================================================
+# Dokploy & Docker Compose Configuration for Dart
+# Telegram-backed Private Cloud Storage
+# ========================================================
+
+services:
+  dart:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: dart:latest
+    container_name: dart-app
+    restart: unless-stopped
+    ports:
+      - "${PORT:-4000}:4000"
+    environment:
+      - NODE_ENV=production
+      - PORT=4000
+      - HOST=0.0.0.0
+      - DATA_DIR=/app/data
+      - CLIENT_DIST=/app/client/dist
+      # Optional: Pre-populate Telegram API credentials
+      # (If omitted, you can connect Telegram directly via Dart's UI)
+      - TELEGRAM_API_ID=${TELEGRAM_API_ID:-}
+      - TELEGRAM_API_HASH=${TELEGRAM_API_HASH:-}
+      - TELEGRAM_SESSION_STRING=${TELEGRAM_SESSION_STRING:-}
+      - PUBLIC_URL=${PUBLIC_URL:-http://localhost:4000}
+    volumes:
+      # Persistent volume for SQLite database and Telegram sessions
+      - dart_data:/app/data
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://127.0.0.1:4000/api/auth/setup-status || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+
+    # Traefik labels (Optional: Dokploy UI handles routing automatically,
+    # but these labels can be used for custom Traefik standalone setups)
+    # labels:
+    #   - "traefik.enable=true"
+    #   - "traefik.http.routers.dart.rule=Host(`dart.yourdomain.com`)"
+    #   - "traefik.http.routers.dart.entrypoints=websecure"
+    #   - "traefik.http.routers.dart.tls.certresolver=letsencrypt"
+    #   - "traefik.http.services.dart.loadbalancer.server.port=4000"
+
+volumes:
+  dart_data:
+    name: dart_data
