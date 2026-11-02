@@ -170,26 +170,53 @@ export const folderRepo = {
 
 // ================= Files =================
 export const fileRepo = {
-  list(folderId: string | null = null, search?: string): FileRecord[] {
+  list(
+    folderId: string | null = null,
+    search?: string,
+    limit?: number,
+    offset?: number
+  ): FileRecord[] {
     const db = getDatabase();
+    const hasPagination = typeof limit === 'number' && limit > 0;
+    const paginationClause = hasPagination ? ` LIMIT ${Math.floor(limit)} OFFSET ${Math.floor(offset || 0)}` : '';
+
     if (search && search.trim()) {
       const stmt = db.prepare(
-        'SELECT * FROM files WHERE name LIKE ? ORDER BY created_at DESC'
+        `SELECT * FROM files WHERE name LIKE ? ORDER BY created_at DESC${paginationClause}`
       );
       return stmt.all(`%${search.trim()}%`) as unknown as FileRecord[];
     }
 
     if (folderId === null) {
       const stmt = db.prepare(
-        'SELECT * FROM files WHERE folder_id IS NULL ORDER BY created_at DESC'
+        `SELECT * FROM files WHERE folder_id IS NULL ORDER BY created_at DESC${paginationClause}`
       );
       return stmt.all() as unknown as FileRecord[];
     }
 
     const stmt = db.prepare(
-      'SELECT * FROM files WHERE folder_id = ? ORDER BY created_at DESC'
+      `SELECT * FROM files WHERE folder_id = ? ORDER BY created_at DESC${paginationClause}`
     );
     return stmt.all(folderId) as unknown as FileRecord[];
+  },
+
+  count(folderId: string | null = null, search?: string): number {
+    const db = getDatabase();
+    if (search && search.trim()) {
+      const stmt = db.prepare('SELECT COUNT(*) as count FROM files WHERE name LIKE ?');
+      const res = stmt.get(`%${search.trim()}%`) as { count: number };
+      return res.count;
+    }
+
+    if (folderId === null) {
+      const stmt = db.prepare('SELECT COUNT(*) as count FROM files WHERE folder_id IS NULL');
+      const res = stmt.get() as { count: number };
+      return res.count;
+    }
+
+    const stmt = db.prepare('SELECT COUNT(*) as count FROM files WHERE folder_id = ?');
+    const res = stmt.get(folderId) as { count: number };
+    return res.count;
   },
 
   get(id: string): FileRecord | null {

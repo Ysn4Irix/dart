@@ -22,15 +22,50 @@ export async function fileRoutes(fastify: FastifyInstance) {
     }
   });
 
-  // List files with optional search & folder filtering
+  // List files with optional search & folder filtering & pagination
   fastify.get('/api/files', async (request) => {
-    const query = request.query as { folderId?: string; search?: string };
+    const query = request.query as {
+      folderId?: string;
+      search?: string;
+      limit?: string | number;
+      offset?: string | number;
+      page?: string | number;
+      pageSize?: string | number;
+    };
     const folderId =
       query.folderId !== undefined
         ? query.folderId === 'root' || query.folderId === '__recent__'
           ? null
           : query.folderId
         : null;
+
+    let limit: number | undefined;
+    let offset: number | undefined;
+
+    if (query.pageSize !== undefined || query.page !== undefined) {
+      const ps = Math.max(1, parseInt(String(query.pageSize || 24), 10) || 24);
+      const p = Math.max(1, parseInt(String(query.page || 1), 10) || 1);
+      limit = ps;
+      offset = (p - 1) * ps;
+    } else if (query.limit !== undefined) {
+      limit = Math.max(1, parseInt(String(query.limit), 10) || 24);
+      offset = query.offset !== undefined ? Math.max(0, parseInt(String(query.offset), 10) || 0) : 0;
+    }
+
+    if (limit !== undefined) {
+      const files = fileRepo.list(folderId, query.search, limit, offset);
+      const total = fileRepo.count(folderId, query.search);
+      return {
+        files,
+        total,
+        limit,
+        offset: offset || 0,
+        page: Math.floor((offset || 0) / limit) + 1,
+        pageSize: limit,
+        totalPages: Math.max(1, Math.ceil(total / limit)),
+      };
+    }
+
     return fileRepo.list(folderId, query.search);
   });
 

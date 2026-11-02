@@ -32,19 +32,42 @@ export function App() {
     return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
   });
 
-  useEffect(() => {
-    if (theme === 'dark') {
+  const applyThemeToDom = (targetTheme: Theme) => {
+    if (targetTheme === 'dark') {
       document.documentElement.classList.add('dark');
       document.documentElement.setAttribute('data-theme', 'dark');
     } else {
       document.documentElement.classList.remove('dark');
       document.documentElement.setAttribute('data-theme', 'light');
     }
-    localStorage.setItem('dart_theme', theme);
+    localStorage.setItem('dart_theme', targetTheme);
+  };
+
+  useEffect(() => {
+    applyThemeToDom(theme);
   }, [theme]);
 
   const handleToggleTheme = () => {
-    setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
+    const nextTheme: Theme = theme === 'dark' ? 'light' : 'dark';
+
+    // 1. Hardware-accelerated View Transition on supporting browsers
+    const docWithTransition = document as unknown as { startViewTransition?: (cb: () => void) => void };
+    if (typeof docWithTransition.startViewTransition === 'function') {
+      docWithTransition.startViewTransition(() => {
+        applyThemeToDom(nextTheme);
+        setTheme(nextTheme);
+      });
+      return;
+    }
+
+    // 2. Coordinated fallback transition for browsers without View Transitions
+    document.documentElement.classList.add('theme-transition');
+    applyThemeToDom(nextTheme);
+    setTheme(nextTheme);
+
+    window.setTimeout(() => {
+      document.documentElement.classList.remove('theme-transition');
+    }, 250);
   };
 
   // Master Authentication & Onboarding state

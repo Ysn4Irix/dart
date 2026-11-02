@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.12.0] - 2026-11-02
+
+### Added
+- **Responsive Files Pagination:** Added fluid pagination to the file explorer with a grid-aligned default of 24 items per page (cleanly divisible across 1, 2, 3, 4, and 6 columns), customizable page size selector (`12`, `24`, `48`, `96`, `All`), smooth scroll restoration to top of list, item range indicator (`Showing 1–24 of 142 files`), and dynamic numbered pagination controls with ellipsis truncation.
+- **Backend Pagination & Count:** Extended `fileRepo.list()` and `fileRepo.count()` in `server/src/db/index.ts` with optional `limit` and `offset` support, and updated `GET /api/files` to return pagination metadata `{ files, total, limit, offset, page, pageSize, totalPages }` while maintaining full backward compatibility.
+- **Files Pagination Test Suite (`server/test/files.test.ts`):** Added unit test coverage for `fileRepo.count()`, offset/limit pagination retrieval across distinct batches, and paginated keyword search.
+
+### Changed
+- **Optimized Theme Switching Performance:** Eliminated theme-toggle flash, lag, and style recalculation stutter by using hardware-accelerated native View Transitions (`document.startViewTransition`) on supporting browsers and immediate synchronous DOM attribute updates (`data-theme`, `classList`), backed by a coordinated 200ms cubic-bezier transition fallback (`.theme-transition`).
+- **Cleaned Up Obsolete Authentication Components:** Removed deprecated `SetupScreen.tsx` to eliminate redundant master setup code and avoid confusion with unified account creation.
+
 ## [0.11.2] - 2026-11-02
 
 ### Changed

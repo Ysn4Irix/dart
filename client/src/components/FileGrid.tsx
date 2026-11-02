@@ -11,6 +11,7 @@ import {
   Share2,
   Trash2,
   Eye,
+  ChevronLeft,
   ChevronRight,
   AlertTriangle,
   RefreshCw,
@@ -313,6 +314,25 @@ export const FileGrid: React.FC<FileGridProps> = ({
   });
   const [sortOption, setSortOption] = useState<SortOption>('newest');
 
+  // Pagination state (default: 24, evenly divisible across 1, 2, 3, 4, 6 columns)
+  const [pageSize, setPageSize] = useState<number>(() => {
+    const saved = localStorage.getItem('dart_page_size');
+    if (saved !== null) {
+      const parsed = parseInt(saved, 10);
+      if (!isNaN(parsed) && [0, 12, 24, 48, 96].includes(parsed)) {
+        return parsed;
+      }
+    }
+    return 24;
+  });
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+
+  // Reset pagination to page 1 whenever filters, search, or folder change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [currentFolderId, searchQuery, selectedCategory, selectedDateFilter, sortOption]);
+
   const prevFolderIdRef = useRef<string | null>(currentFolderId);
 
   useEffect(() => {
@@ -396,6 +416,47 @@ export const FileGrid: React.FC<FileGridProps> = ({
     () => filteredFiles.filter((f) => f.status !== 'missing'),
     [filteredFiles]
   );
+
+  // Pagination calculations
+  const totalFiles = filteredFiles.length;
+  const totalPages = pageSize === 0 ? 1 : Math.max(1, Math.ceil(totalFiles / pageSize));
+  const safeCurrentPage = Math.min(Math.max(1, currentPage), totalPages);
+
+  const paginatedFiles = useMemo(() => {
+    if (pageSize === 0) return filteredFiles;
+    const startIndex = (safeCurrentPage - 1) * pageSize;
+    return filteredFiles.slice(startIndex, startIndex + pageSize);
+  }, [filteredFiles, safeCurrentPage, pageSize]);
+
+  const handlePageChange = (newPage: number) => {
+    if (newPage < 1 || newPage > totalPages || newPage === safeCurrentPage) return;
+    setCurrentPage(newPage);
+    scrollContainerRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handlePageSizeChange = (newSize: number) => {
+    setPageSize(newSize);
+    localStorage.setItem('dart_page_size', String(newSize));
+    setCurrentPage(1);
+    scrollContainerRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const getVisiblePages = (current: number, total: number): (number | '...')[] => {
+    if (total <= 7) {
+      return Array.from({ length: total }, (_, i) => i + 1);
+    }
+    if (current <= 4) {
+      return [1, 2, 3, 4, 5, '...', total];
+    }
+    if (current >= total - 3) {
+      return [1, '...', total - 4, total - 3, total - 2, total - 1, total];
+    }
+    return [1, '...', current - 1, current, current + 1, '...', total];
+  };
+
+  const startIndex =
+    pageSize === 0 ? (totalFiles > 0 ? 1 : 0) : totalFiles === 0 ? 0 : (safeCurrentPage - 1) * pageSize + 1;
+  const endIndex = pageSize === 0 ? totalFiles : Math.min(safeCurrentPage * pageSize, totalFiles);
 
   const isAllSelected =
     activeFilteredFiles.length > 0 &&
@@ -685,7 +746,7 @@ export const FileGrid: React.FC<FileGridProps> = ({
       </div>
 
       {/* Main Content Area */}
-      <div className="flex-1 overflow-y-auto p-6">
+      <div ref={scrollContainerRef} className="flex-1 overflow-y-auto p-6">
         {files.length === 0 ? (
           /* Empty Storage State */
           <div className="h-64 flex flex-col items-center justify-center text-center text-stone-500 border border-dashed border-stone-300 dark:border-stone-800 rounded-xl p-6 bg-stone-50/50 dark:bg-transparent">
@@ -746,8 +807,8 @@ export const FileGrid: React.FC<FileGridProps> = ({
           </div>
         ) : viewMode === 'grid' ? (
           /* GRID VIEW */
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-            {filteredFiles.map((file) => {
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
+            {paginatedFiles.map((file) => {
               const isMissing = file.status === 'missing';
               const ext = getFileExtension(file.name);
               const dateInfo = formatFileDate(file.created_at);
@@ -951,7 +1012,7 @@ export const FileGrid: React.FC<FileGridProps> = ({
                 </tr>
               </thead>
               <tbody className="divide-y divide-stone-100 dark:divide-stone-800/60">
-                {filteredFiles.map((file) => {
+                {paginatedFiles.map((file) => {
                   const isMissing = file.status === 'missing';
                   const ext = getFileExtension(file.name);
                   const dateInfo = formatFileDate(file.created_at);
@@ -1103,6 +1164,89 @@ export const FileGrid: React.FC<FileGridProps> = ({
           </div>
         )}
       </div>
+
+      {/* Responsive Pagination Bar */}
+      {totalFiles > 0 && (
+        <div className="px-6 py-3 border-t border-stone-200 dark:border-stone-800 bg-white/70 dark:bg-stone-900/60 backdrop-blur flex flex-wrap items-center justify-between gap-3 text-xs text-stone-600 dark:text-stone-400">
+          {/* Left: Showing range plain text */}
+          <div className="flex items-center gap-2">
+            <span>
+              Showing <span className="font-medium text-stone-900 dark:text-stone-200">{startIndex}</span>&ndash;
+              <span className="font-medium text-stone-900 dark:text-stone-200">{endIndex}</span> of{' '}
+              <span className="font-medium text-stone-900 dark:text-stone-200">{totalFiles}</span>{' '}
+              {totalFiles === 1 ? 'file' : 'files'}
+            </span>
+          </div>
+
+          {/* Right: Page navigation & Page size selector */}
+          <div className="flex items-center gap-3 sm:gap-4 ml-auto">
+            {/* Page size dropdown */}
+            <div className="flex items-center gap-1.5">
+              <span className="text-stone-500 dark:text-stone-400 text-xs">Per page:</span>
+              <select
+                value={pageSize}
+                onChange={(e) => handlePageSizeChange(Number(e.target.value))}
+                className="bg-stone-100 dark:bg-stone-800 border border-stone-200 dark:border-stone-700/80 rounded-md px-2 py-1 text-stone-800 dark:text-stone-200 focus:outline-hidden cursor-pointer"
+                title="Select number of files per page"
+              >
+                <option value={12}>12</option>
+                <option value={24}>24</option>
+                <option value={48}>48</option>
+                <option value={96}>96</option>
+                <option value={0}>All</option>
+              </select>
+            </div>
+
+            {/* Page navigation buttons */}
+            {totalPages > 1 && (
+              <div className="flex items-center gap-1">
+                <button
+                  type="button"
+                  onClick={() => handlePageChange(safeCurrentPage - 1)}
+                  disabled={safeCurrentPage <= 1}
+                  className="p-1.5 rounded-md hover:bg-stone-100 dark:hover:bg-stone-800 text-stone-700 dark:text-stone-300 disabled:opacity-30 disabled:hover:bg-transparent cursor-pointer disabled:cursor-not-allowed transition-colors"
+                  title="Previous page"
+                  aria-label="Previous page"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </button>
+
+                {getVisiblePages(safeCurrentPage, totalPages).map((p, idx) =>
+                  p === '...' ? (
+                    <span key={`ellipsis-${idx}`} className="px-1 text-stone-400 select-none">
+                      &hellip;
+                    </span>
+                  ) : (
+                    <button
+                      key={`page-${p}`}
+                      type="button"
+                      onClick={() => handlePageChange(p as number)}
+                      className={`min-w-[28px] h-7 px-2 rounded-md font-medium text-xs transition-colors cursor-pointer ${
+                        safeCurrentPage === p
+                          ? 'bg-emerald-600 text-white shadow-2xs'
+                          : 'text-stone-700 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800'
+                      }`}
+                    >
+                      {p}
+                    </button>
+                  )
+                )}
+
+                <button
+                  type="button"
+                  onClick={() => handlePageChange(safeCurrentPage + 1)}
+                  disabled={safeCurrentPage >= totalPages}
+                  className="p-1.5 rounded-md hover:bg-stone-100 dark:hover:bg-stone-800 text-stone-700 dark:text-stone-300 disabled:opacity-30 disabled:hover:bg-transparent cursor-pointer disabled:cursor-not-allowed transition-colors"
+                  title="Next page"
+                  aria-label="Next page"
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Floating Bulk Action Bar */}
       <BulkActionBar
