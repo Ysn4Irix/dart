@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.11.1] - 2026-11-02
+
+### Fixed
+- **Unified Authentication & Sign-Up Flow:** Removed duplicate "Set up master account" action on `<LoginScreen>`. The sign-up flow and master account creation are unified into a single streamlined screen that automatically opens in registration mode on first launch (`needsSetup`) or login mode on subsequent visits, with a single intuitive switcher between *"Don't have an account? Create an account"* and *"Already have an account? Sign in"*.
+
 ## [0.11.0] - 2026-11-02
 
 ### Added

@@ -7,7 +7,6 @@ import { UploadModal } from './components/UploadModal.js';
 import { ShareModal } from './components/ShareModal.js';
 import { PreviewModal } from './components/PreviewModal.js';
 import { AuthModal } from './components/AuthModal.js';
-import { SetupScreen } from './components/SetupScreen.js';
 import { LoginScreen } from './components/LoginScreen.js';
 import { DartLogo } from './components/DartLogo.js';
 import { PublicSharePage } from './pages/PublicSharePage.js';
@@ -52,7 +51,6 @@ export function App() {
   const [setupStatus, setSetupStatus] = useState<SetupStatus | null>(null);
   const [currentUser, setCurrentUser] = useState<AppUser | null>(null);
   const [isAuthChecking, setIsAuthChecking] = useState(true);
-  const [authViewMode, setAuthViewMode] = useState<'auto' | 'setup' | 'login'>('auto');
 
   // Dashboard state
   const [authStatus, setAuthStatus] = useState<AuthStatus | null>(null);
@@ -242,25 +240,13 @@ export function App() {
     );
   }
 
-  // 2. First-time Master Account Setup Wizard
-  if (setupStatus?.needsSetup && authViewMode !== 'login') {
-    return (
-      <SetupScreen
-        onSetupSuccess={handleAuthComplete}
-        onSwitchToLogin={() => setAuthViewMode('login')}
-        theme={theme}
-        onToggleTheme={handleToggleTheme}
-      />
-    );
-  }
-
-  // 3. User Authentication Gate (Login with existing account or register new)
+  // 2. User Authentication Gate (Login with existing account or register new)
   if (!currentUser) {
     return (
       <LoginScreen
         onLoginSuccess={handleAuthComplete}
-        initialMode="login"
-        onSwitchToSetup={setupStatus?.needsSetup ? () => setAuthViewMode('setup') : undefined}
+        initialMode={setupStatus?.needsSetup ? 'register' : 'login'}
+        isFirstRun={setupStatus?.needsSetup}
         theme={theme}
         onToggleTheme={handleToggleTheme}
       />

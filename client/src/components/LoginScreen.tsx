@@ -7,7 +7,7 @@ import { AppUser, Theme } from '../types.js';
 interface LoginScreenProps {
   onLoginSuccess: (user: AppUser) => void;
   initialMode?: 'login' | 'register';
-  onSwitchToSetup?: () => void;
+  isFirstRun?: boolean;
   theme: Theme;
   onToggleTheme: () => void;
 }
@@ -15,7 +15,7 @@ interface LoginScreenProps {
 export const LoginScreen: React.FC<LoginScreenProps> = ({
   onLoginSuccess,
   initialMode = 'login',
-  onSwitchToSetup,
+  isFirstRun = false,
   theme,
   onToggleTheme,
 }) => {
@@ -77,7 +77,9 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
     setIsLoading(true);
     try {
       if (mode === 'register') {
-        const res = await api.register(cleanUsername, password);
+        const res = isFirstRun
+          ? await api.registerOwner(cleanUsername, password)
+          : await api.register(cleanUsername, password);
         onLoginSuccess(res.user);
       } else {
         const res = await api.login(cleanUsername, password);
@@ -99,6 +101,8 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
     setAcknowledged(false);
   };
 
+  const isRegister = mode === 'register';
+
   return (
     <div className="min-h-screen w-full flex flex-col justify-between bg-stone-50 dark:bg-stone-950 text-stone-900 dark:text-stone-100 transition-colors p-6 sm:p-10">
       {/* Top Header bar with Theme switch */}
@@ -110,7 +114,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
           <div>
             <span className="font-semibold text-stone-900 dark:text-stone-100 text-lg tracking-tight">Dart</span>
             <span className="text-xs text-stone-500 dark:text-stone-400 border-l border-stone-200 dark:border-stone-800 ml-2.5 pl-2.5">
-              Secure Cloud
+              {isFirstRun && isRegister ? 'Initial Setup' : 'Secure Cloud'}
             </span>
           </div>
         </div>
@@ -135,19 +139,25 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
         <div className="bg-white dark:bg-stone-900 rounded-2xl border border-stone-200 dark:border-stone-800 shadow-xl p-8 transition-colors">
           <div className="mb-6">
             <div className="w-12 h-12 rounded-xl bg-stone-100 dark:bg-stone-800/80 border border-stone-200 dark:border-stone-700 flex items-center justify-center mb-5">
-              {mode === 'login' ? (
-                <Lock className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
-              ) : (
+              {isRegister ? (
                 <UserPlus className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
+              ) : (
+                <Lock className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
               )}
             </div>
             <h1 className="text-2xl font-bold tracking-tight text-stone-900 dark:text-stone-50">
-              {mode === 'login' ? 'Sign In to Dart' : 'Create an Account'}
+              {isRegister
+                ? isFirstRun
+                  ? 'Create Master Account'
+                  : 'Create an Account'
+                : 'Sign In to Dart'}
             </h1>
             <p className="mt-2 text-sm text-stone-600 dark:text-stone-400 leading-relaxed">
-              {mode === 'login'
-                ? 'Enter your account credentials to access your private files and storage.'
-                : 'Create your personal account credentials to access and manage cloud storage.'}
+              {isRegister
+                ? isFirstRun
+                  ? 'Set up the primary administrator account for this Dart instance.'
+                  : 'Create your account credentials to access and manage cloud storage.'
+                : 'Enter your account credentials to access your private files and storage.'}
             </p>
           </div>
 
@@ -161,7 +171,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label
-                htmlFor="login-username"
+                htmlFor="auth-username"
                 className="block text-xs font-medium uppercase tracking-wider text-stone-700 dark:text-stone-300 mb-1.5"
               >
                 Username
@@ -169,14 +179,14 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
               <div className="relative">
                 <User className="w-4 h-4 text-stone-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
                 <input
-                  id="login-username"
+                  id="auth-username"
                   type="text"
                   autoComplete="username"
                   autoFocus
                   required
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
-                  placeholder={mode === 'login' ? 'username' : 'choose a username'}
+                  placeholder={isRegister ? 'choose a username' : 'username'}
                   className="w-full bg-stone-50 dark:bg-stone-800/80 border border-stone-300 dark:border-stone-700 rounded-lg pl-9 pr-4 py-2.5 text-sm text-stone-900 dark:text-stone-100 placeholder-stone-400 dark:placeholder-stone-500 focus:outline-hidden focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-colors"
                 />
               </div>
@@ -184,7 +194,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
 
             <div>
               <label
-                htmlFor="login-password"
+                htmlFor="auth-password"
                 className="block text-xs font-medium uppercase tracking-wider text-stone-700 dark:text-stone-300 mb-1.5"
               >
                 Password
@@ -192,23 +202,23 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
               <div className="relative">
                 <KeyRound className="w-4 h-4 text-stone-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
                 <input
-                  id="login-password"
+                  id="auth-password"
                   type="password"
-                  autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
+                  autoComplete={isRegister ? 'new-password' : 'current-password'}
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder={mode === 'login' ? '••••••••••••' : 'at least 6 characters'}
+                  placeholder={isRegister ? 'at least 6 characters' : '••••••••••••'}
                   className="w-full bg-stone-50 dark:bg-stone-800/80 border border-stone-300 dark:border-stone-700 rounded-lg pl-9 pr-4 py-2.5 text-sm text-stone-900 dark:text-stone-100 placeholder-stone-400 dark:placeholder-stone-500 focus:outline-hidden focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-colors"
                 />
               </div>
             </div>
 
-            {mode === 'register' && (
+            {isRegister && (
               <>
                 <div>
                   <label
-                    htmlFor="login-confirm-password"
+                    htmlFor="auth-confirm-password"
                     className="block text-xs font-medium uppercase tracking-wider text-stone-700 dark:text-stone-300 mb-1.5"
                   >
                     Confirm Password
@@ -216,7 +226,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
                   <div className="relative">
                     <KeyRound className="w-4 h-4 text-stone-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
                     <input
-                      id="login-confirm-password"
+                      id="auth-confirm-password"
                       type="password"
                       autoComplete="new-password"
                       required
@@ -259,22 +269,25 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
 
             <button
               type="submit"
-              disabled={isLoading || (mode === 'register' && !acknowledged)}
+              disabled={isLoading || (isRegister && !acknowledged)}
               className="w-full mt-2 flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg transition-colors cursor-pointer shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <span>
                 {isLoading
-                  ? mode === 'register'
+                  ? isRegister
                     ? 'Creating Account...'
                     : 'Signing In...'
-                  : mode === 'register'
-                    ? 'Create Account & Enter Dart'
+                  : isRegister
+                    ? isFirstRun
+                      ? 'Complete Setup & Enter Dart'
+                      : 'Create Account & Enter Dart'
                     : 'Sign In to Dart'}
               </span>
               <ArrowRight className="w-4 h-4" />
             </button>
 
-            <div className="pt-3 border-t border-stone-100 dark:border-stone-800 text-center space-y-2">
+            {/* Single clean switcher - no duplicate links */}
+            <div className="pt-3 border-t border-stone-100 dark:border-stone-800 text-center">
               {mode === 'login' ? (
                 <button
                   type="button"
@@ -291,18 +304,6 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
                 >
                   Already have an account? <span className="underline font-medium">Sign in</span>
                 </button>
-              )}
-
-              {onSwitchToSetup && (
-                <div>
-                  <button
-                    type="button"
-                    onClick={onSwitchToSetup}
-                    className="text-xs text-stone-500 dark:text-stone-500 hover:text-stone-700 dark:hover:text-stone-300 transition-colors cursor-pointer"
-                  >
-                    Need initial master setup? <span className="underline">Set up master account</span>
-                  </button>
-                </div>
               )}
             </div>
           </form>
