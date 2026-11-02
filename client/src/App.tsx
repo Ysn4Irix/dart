@@ -352,6 +352,7 @@ export function App() {
         file={previewTargetFile}
         onDownload={handleDownloadFile}
         onDelete={handleDeleteFile}
+        onShare={(f) => setShareTargetFile(f)}
       />
 
       <AuthModal

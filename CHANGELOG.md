@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.1] - 2026-11-02
+
+### Fixed
+- **View File Action Availability:** Removed the overly restrictive media-type gate (`hasPreview` / `isMedia`) in `<FileGrid>` that completely hid the View button for archives, applications, and non-media files. Every non-deleted file now features an explicit "View file" action.
+- **Card & Row Direct Click-to-View:** Enabled clicking anywhere on file cards (Grid view) or table rows (List view) to instantly open the file in the viewer, with `stopPropagation` isolated on sub-actions (Download, Share, Delete).
+- **Accurate In-Browser Media & Document Rendering:** Enhanced `getFileViewerType` in `<PreviewModal>` to properly detect images (`.jpg`, `.png`, `.gif`, `.webp`, `.svg`), videos (`.mp4`, `.webm`, `.mkv`), audio (`.mp3`, `.wav`, `.ogg`, `.m4a`), PDFs, and code/text (`.ts`, `.js`, `.py`, `.sh`, `.ps1`, `.json`, `.yaml`, `.csv`, `.md`, `.txt`) even when Telegram catalogs them as generic `application/octet-stream`.
+- **Dynamic Server MIME Resolution:** Implemented `resolveMimeType()` in `server/src/telegram/streamer.ts` to infer correct `Content-Type` headers from file extensions on streaming and range requests, enabling native browser playback and PDF viewing.
+- **Query Param Token Authentication:** Updated `getSessionFromRequest()` to support `?token=` parameter extraction, ensuring inline media players, iframes, and cross-context elements authenticate reliably without cookie race conditions.
+- **Media Buffering & Fallback States:** Added buffering spinners and error states to `<PreviewModal>` with direct download fallbacks, keyboard `Escape` closing, and backdrop dismissal.
+- **Generic File Overview:** Added structured file metadata inspection with dedicated category icons and direct "Download File" and "Share" actions for binary and archive formats.
+
 ## [0.8.0] - 2026-11-02
 
 ### Added

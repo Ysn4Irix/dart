@@ -373,24 +373,6 @@ export const FileGrid: React.FC<FileGridProps> = ({
     return <FileText className="w-5 h-5 text-stone-400" />;
   };
 
-  const isMedia = (mime: string, name = '') => {
-    const lowerName = name.toLowerCase();
-    return (
-      mime.startsWith('video/') ||
-      mime.startsWith('audio/') ||
-      mime.startsWith('image/') ||
-      mime.startsWith('text/') ||
-      mime === 'application/pdf' ||
-      mime === 'application/json' ||
-      lowerName.endsWith('.txt') ||
-      lowerName.endsWith('.md') ||
-      lowerName.endsWith('.json') ||
-      lowerName.endsWith('.log') ||
-      lowerName.endsWith('.srt') ||
-      lowerName.endsWith('.vcf')
-    );
-  };
-
   const getFileExtension = (name: string): string => {
     const parts = name.split('.');
     return parts.length > 1 ? parts.pop()!.toUpperCase() : 'FILE';
@@ -610,7 +592,6 @@ export const FileGrid: React.FC<FileGridProps> = ({
           /* GRID VIEW */
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
             {filteredFiles.map((file) => {
-              const hasPreview = isMedia(file.mime_type, file.name);
               const isMissing = file.status === 'missing';
               const ext = getFileExtension(file.name);
               const dateInfo = formatFileDate(file.created_at);
@@ -618,8 +599,9 @@ export const FileGrid: React.FC<FileGridProps> = ({
               return (
                 <div
                   key={file.id}
-                  className={`group relative bg-stone-50/80 dark:bg-stone-800/40 border border-stone-200 dark:border-stone-800 rounded-xl p-4 hover:border-stone-300 dark:hover:border-stone-700/80 hover:bg-white dark:hover:bg-stone-800/70 shadow-2xs hover:shadow-xs transition-all flex flex-col justify-between ${
-                    isMissing ? 'opacity-60 border-red-300 dark:border-red-950/60' : ''
+                  onClick={() => !isMissing && onPreview(file)}
+                  className={`group relative bg-stone-50/80 dark:bg-stone-800/40 border border-stone-200 dark:border-stone-800 rounded-xl p-4 hover:border-emerald-500/40 dark:hover:border-emerald-500/30 hover:bg-white dark:hover:bg-stone-800/70 shadow-2xs hover:shadow-xs transition-all flex flex-col justify-between cursor-pointer ${
+                    isMissing ? 'opacity-60 border-red-300 dark:border-red-950/60 cursor-default' : ''
                   }`}
                 >
                   <div>
@@ -630,35 +612,51 @@ export const FileGrid: React.FC<FileGridProps> = ({
 
                       {/* Action buttons */}
                       <div className="flex items-center gap-1 opacity-80 group-hover:opacity-100 transition-opacity">
-                        {hasPreview && !isMissing && (
+                        {!isMissing && (
                           <button
-                            onClick={() => onPreview(file)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onPreview(file);
+                            }}
                             className="p-1.5 text-stone-500 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-100 hover:bg-stone-200/60 dark:hover:bg-stone-700/60 rounded-md transition-colors cursor-pointer"
-                            title="Preview / Stream"
+                            title="View file"
+                            aria-label={`View ${file.name}`}
                           >
                             <Eye className="w-3.5 h-3.5" />
                           </button>
                         )}
                         {!isMissing && (
                           <button
-                            onClick={() => onShare(file)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onShare(file);
+                            }}
                             className="p-1.5 text-stone-500 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-100 hover:bg-stone-200/60 dark:hover:bg-stone-700/60 rounded-md transition-colors cursor-pointer"
                             title="Share Link"
+                            aria-label={`Share ${file.name}`}
                           >
                             <Share2 className="w-3.5 h-3.5" />
                           </button>
                         )}
                         <button
-                          onClick={() => onDownload(file)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onDownload(file);
+                          }}
                           className="p-1.5 text-stone-500 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-100 hover:bg-stone-200/60 dark:hover:bg-stone-700/60 rounded-md transition-colors cursor-pointer"
                           title="Download"
+                          aria-label={`Download ${file.name}`}
                         >
                           <Download className="w-3.5 h-3.5" />
                         </button>
                         <button
-                          onClick={() => onDelete(file)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onDelete(file);
+                          }}
                           className="p-1.5 text-stone-500 dark:text-stone-400 hover:text-red-500 dark:hover:text-red-400 hover:bg-stone-200/60 dark:hover:bg-stone-700/60 rounded-md transition-colors cursor-pointer"
                           title="Delete"
+                          aria-label={`Delete ${file.name}`}
                         >
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
@@ -737,7 +735,6 @@ export const FileGrid: React.FC<FileGridProps> = ({
               </thead>
               <tbody className="divide-y divide-stone-100 dark:divide-stone-800/60">
                 {filteredFiles.map((file) => {
-                  const hasPreview = isMedia(file.mime_type, file.name);
                   const isMissing = file.status === 'missing';
                   const ext = getFileExtension(file.name);
                   const dateInfo = formatFileDate(file.created_at);
@@ -745,8 +742,9 @@ export const FileGrid: React.FC<FileGridProps> = ({
                   return (
                     <tr
                       key={file.id}
-                      className={`hover:bg-stone-50/80 dark:hover:bg-stone-800/50 transition-colors group ${
-                        isMissing ? 'opacity-60 bg-red-50 dark:bg-red-950/10' : ''
+                      onClick={() => !isMissing && onPreview(file)}
+                      className={`hover:bg-stone-50/80 dark:hover:bg-stone-800/50 transition-colors group cursor-pointer ${
+                        isMissing ? 'opacity-60 bg-red-50 dark:bg-red-950/10 cursor-default' : ''
                       }`}
                     >
                       {/* Name */}
@@ -795,35 +793,51 @@ export const FileGrid: React.FC<FileGridProps> = ({
                       {/* Actions */}
                       <td className="py-3 px-4 text-right">
                         <div className="flex items-center justify-end gap-1 opacity-80 group-hover:opacity-100 transition-opacity">
-                          {hasPreview && !isMissing && (
+                          {!isMissing && (
                             <button
-                              onClick={() => onPreview(file)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onPreview(file);
+                              }}
                               className="p-1.5 text-stone-500 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-100 hover:bg-stone-200/60 dark:hover:bg-stone-700/60 rounded-md transition-colors cursor-pointer"
-                              title="Preview / Stream"
+                              title="View file"
+                              aria-label={`View ${file.name}`}
                             >
                               <Eye className="w-4 h-4" />
                             </button>
                           )}
                           {!isMissing && (
                             <button
-                              onClick={() => onShare(file)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onShare(file);
+                              }}
                               className="p-1.5 text-stone-500 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-100 hover:bg-stone-200/60 dark:hover:bg-stone-700/60 rounded-md transition-colors cursor-pointer"
                               title="Share Link"
+                              aria-label={`Share ${file.name}`}
                             >
                               <Share2 className="w-4 h-4" />
                             </button>
                           )}
                           <button
-                            onClick={() => onDownload(file)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onDownload(file);
+                            }}
                             className="p-1.5 text-stone-500 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-100 hover:bg-stone-200/60 dark:hover:bg-stone-700/60 rounded-md transition-colors cursor-pointer"
                             title="Download"
+                            aria-label={`Download ${file.name}`}
                           >
                             <Download className="w-4 h-4" />
                           </button>
                           <button
-                            onClick={() => onDelete(file)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onDelete(file);
+                            }}
                             className="p-1.5 text-stone-500 dark:text-stone-400 hover:text-red-500 dark:hover:text-red-400 hover:bg-stone-200/60 dark:hover:bg-stone-700/60 rounded-md transition-colors cursor-pointer"
                             title="Delete"
+                            aria-label={`Delete ${file.name}`}
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>

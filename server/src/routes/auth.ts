@@ -23,6 +23,13 @@ export function getSessionFromRequest(request: FastifyRequest): { session: Sessi
     }
   }
 
+  // 3. Check query param ?token= (for direct media elements like <img>, <video>, <audio>, <iframe>)
+  const query = request.query as { token?: string } | undefined;
+  if (query?.token) {
+    const res = sessionRepo.get(query.token);
+    if (res) return res;
+  }
+
   return null;
 }
 

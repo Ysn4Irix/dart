@@ -12,6 +12,42 @@ export interface RangeInfo {
 }
 
 /**
+ * Infers an accurate MIME type based on filename extension when DB mime_type is generic
+ */
+export function resolveMimeType(name: string, currentMime: string): string {
+  if (currentMime && currentMime !== 'application/octet-stream' && currentMime !== 'binary/octet-stream') {
+    return currentMime;
+  }
+  const lower = name.toLowerCase();
+  if (/\.jpe?g$/i.test(lower)) return 'image/jpeg';
+  if (/\.png$/i.test(lower)) return 'image/png';
+  if (/\.gif$/i.test(lower)) return 'image/gif';
+  if (/\.webp$/i.test(lower)) return 'image/webp';
+  if (/\.svg$/i.test(lower)) return 'image/svg+xml';
+  if (/\.bmp$/i.test(lower)) return 'image/bmp';
+  if (/\.ico$/i.test(lower)) return 'image/x-icon';
+  if (/\.mp4$/i.test(lower)) return 'video/mp4';
+  if (/\.webm$/i.test(lower)) return 'video/webm';
+  if (/\.mkv$/i.test(lower)) return 'video/x-matroska';
+  if (/\.mov$/i.test(lower)) return 'video/quicktime';
+  if (/\.mp3$/i.test(lower)) return 'audio/mpeg';
+  if (/\.ogg$/i.test(lower)) return 'audio/ogg';
+  if (/\.wav$/i.test(lower)) return 'audio/wav';
+  if (/\.m4a$/i.test(lower)) return 'audio/mp4';
+  if (/\.flac$/i.test(lower)) return 'audio/flac';
+  if (/\.pdf$/i.test(lower)) return 'application/pdf';
+  if (/\.(txt|log|srt|vcf|pem|pub|key|env|ini|conf|ps1|sh|bash|py|sql|diff|patch|toml)$/i.test(lower)) return 'text/plain; charset=utf-8';
+  if (/\.(md|markdown)$/i.test(lower)) return 'text/markdown; charset=utf-8';
+  if (/\.json$/i.test(lower)) return 'application/json';
+  if (/\.csv$/i.test(lower)) return 'text/csv; charset=utf-8';
+  if (/\.(js|mjs|cjs)$/i.test(lower)) return 'text/javascript; charset=utf-8';
+  if (/\.(ts|tsx)$/i.test(lower)) return 'text/plain; charset=utf-8';
+  if (/\.html?$/i.test(lower)) return 'text/html; charset=utf-8';
+  if (/\.css$/i.test(lower)) return 'text/css; charset=utf-8';
+  return currentMime || 'application/octet-stream';
+}
+
+/**
  * Parses HTTP Range header into byte coordinates
  */
 export function parseRange(rangeHeader: string, fileSize: number): RangeInfo | null {
@@ -78,13 +114,15 @@ export async function streamTelegramFile(
     });
   }
 
+  const contentType = resolveMimeType(file.name, file.mime_type);
+
   // Handle pure text-based message streaming and downloading
   if (!message.media) {
     const rawText = message.message || (typeof message.text === 'string' ? message.text : '');
     const buffer = Buffer.from(rawText, 'utf8');
     const totalSize = buffer.length;
 
-    reply.header('Content-Type', file.mime_type || 'text/plain; charset=utf-8');
+    reply.header('Content-Type', contentType || 'text/plain; charset=utf-8');
     reply.header('Accept-Ranges', 'bytes');
 
     if (asAttachment) {
@@ -150,7 +188,7 @@ export async function streamTelegramFile(
         .header('Content-Range', `bytes ${range.start}-${range.end}/${file.size}`)
         .header('Accept-Ranges', 'bytes')
         .header('Content-Length', range.chunkLength)
-        .header('Content-Type', file.mime_type);
+        .header('Content-Type', contentType);
 
       if (asAttachment) {
         reply.header(
@@ -183,7 +221,7 @@ export async function streamTelegramFile(
     reply
       .status(200)
       .header('Content-Length', file.size)
-      .header('Content-Type', file.mime_type)
+      .header('Content-Type', contentType)
       .header('Accept-Ranges', 'bytes')
       .header(
         'Content-Disposition',
