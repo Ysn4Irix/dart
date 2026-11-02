@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import {
   FileText,
   FileCode,
@@ -313,10 +313,15 @@ export const FileGrid: React.FC<FileGridProps> = ({
   });
   const [sortOption, setSortOption] = useState<SortOption>('newest');
 
+  const prevFolderIdRef = useRef<string | null>(currentFolderId);
+
   useEffect(() => {
     if (currentFolderId === '__recent__') {
       setSelectedDateFilter('week');
+    } else if (prevFolderIdRef.current === '__recent__') {
+      setSelectedDateFilter('all');
     }
+    prevFolderIdRef.current = currentFolderId;
   }, [currentFolderId]);
 
   // Date counts
@@ -486,7 +491,12 @@ export const FileGrid: React.FC<FileGridProps> = ({
         {/* Breadcrumb & Count */}
         <div className="flex items-center gap-2 text-sm text-stone-500 dark:text-stone-400">
           <button
-            onClick={() => onNavigateFolder(null)}
+            onClick={() => {
+              if (currentFolderId === '__recent__') {
+                setSelectedDateFilter('all');
+              }
+              onNavigateFolder(null);
+            }}
             className={`hover:text-stone-900 dark:hover:text-stone-100 transition-colors cursor-pointer ${
               currentFolderId === null ? 'font-medium text-stone-900 dark:text-stone-100' : ''
             }`}
