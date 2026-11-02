@@ -240,12 +240,12 @@ export function App() {
     );
   }
 
-  // 2. User Authentication Gate (Login with existing account or register new)
+  // 2. User Authentication Gate (Defaults to Sign In)
   if (!currentUser) {
     return (
       <LoginScreen
         onLoginSuccess={handleAuthComplete}
-        initialMode={setupStatus?.needsSetup ? 'register' : 'login'}
+        initialMode="login"
         isFirstRun={setupStatus?.needsSetup}
         theme={theme}
         onToggleTheme={handleToggleTheme}
