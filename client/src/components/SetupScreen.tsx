@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ShieldCheck, ArrowRight, Sun, Moon, AlertCircle, KeyRound, User } from 'lucide-react';
+import { ShieldCheck, ArrowRight, Sun, Moon, AlertCircle, AlertTriangle, KeyRound, User } from 'lucide-react';
 import { DartLogo } from './DartLogo.js';
 import { api } from '../api.js';
 import { AppUser, Theme } from '../types.js';
@@ -18,6 +18,7 @@ export const SetupScreen: React.FC<SetupScreenProps> = ({
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [acknowledged, setAcknowledged] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -53,6 +54,11 @@ export const SetupScreen: React.FC<SetupScreenProps> = ({
 
     if (password !== confirmPassword) {
       setError('Passwords do not match');
+      return;
+    }
+
+    if (!acknowledged) {
+      setError('You must acknowledge that this master account is unrecoverable and immutable');
       return;
     }
 
@@ -195,10 +201,38 @@ export const SetupScreen: React.FC<SetupScreenProps> = ({
               </div>
             </div>
 
+            {/* Warning: Account is unrecoverable and immutable */}
+            <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/25 dark:border-amber-500/20 flex items-start gap-3 text-xs leading-relaxed text-amber-900 dark:text-amber-200">
+              <AlertTriangle className="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+              <div className="space-y-1">
+                <span className="font-semibold text-xs uppercase tracking-wider block text-amber-950 dark:text-amber-100">
+                  Warning: Account is Unrecoverable & Immutable
+                </span>
+                <p className="text-amber-800/90 dark:text-amber-300/90">
+                  This master account cannot be recovered, altered, or reset once created. If credentials are lost, there is no password reset mechanism, and access to this instance and files cannot be restored.
+                </p>
+              </div>
+            </div>
+
+            <div className="pt-1">
+              <label className="flex items-start gap-2.5 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  required
+                  checked={acknowledged}
+                  onChange={(e) => setAcknowledged(e.target.checked)}
+                  className="mt-0.5 w-4 h-4 rounded border-stone-300 dark:border-stone-700 text-emerald-600 focus:ring-emerald-500 focus:ring-offset-0 bg-stone-50 dark:bg-stone-800 cursor-pointer"
+                />
+                <span className="text-xs text-stone-700 dark:text-stone-300 leading-normal">
+                  I understand that this account is unrecoverable and immutable, and I have stored my credentials safely.
+                </span>
+              </label>
+            </div>
+
             <button
               type="submit"
-              disabled={isLoading}
-              className="w-full mt-2 flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg transition-colors cursor-pointer shadow-sm disabled:opacity-50"
+              disabled={isLoading || !acknowledged}
+              className="w-full mt-2 flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg transition-colors cursor-pointer shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <span>{isLoading ? 'Creating Master Account...' : 'Complete Setup & Enter Dart'}</span>
               <ArrowRight className="w-4 h-4" />

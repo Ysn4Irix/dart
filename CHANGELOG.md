@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.2] - 2026-11-02
+
+### Changed
+- **Connection Status Label:** Renamed "Telegram Connected" to "Connected" in the navigation bar (`<Header>`) and authorization dialog (`<AuthModal>`).
+
+### Added
+- **Immutable & Unrecoverable Account Warning:** Added a clear warning callout on `<SetupScreen>` during master account onboarding, notifying owners that credentials cannot be reset or recovered without physical access to the server database.
+- **Setup Acknowledgment Guard:** Added a mandatory confirmation checkbox requiring users to acknowledge the unrecoverable and immutable nature of the account before creating it.
+
 ## [0.8.1] - 2026-11-02
 
 ### Fixed

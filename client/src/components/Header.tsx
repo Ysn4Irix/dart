@@ -105,7 +105,7 @@ export const Header: React.FC<HeaderProps> = ({
               authStatus?.authorized ? 'bg-emerald-500' : 'bg-amber-500 animate-pulse'
             }`}
           />
-          <span>{authStatus?.authorized ? 'Telegram Connected' : 'Connect Telegram'}</span>
+          <span>{authStatus?.authorized ? 'Connected' : 'Connect Telegram'}</span>
         </button>
 
         {currentUser && onLogout && (

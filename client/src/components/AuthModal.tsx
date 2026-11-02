@@ -196,7 +196,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSuc
         {step === 'success' && (
           <div className="py-8 text-center space-y-3">
             <CheckCircle2 className="w-12 h-12 mx-auto text-emerald-500 dark:text-emerald-400 animate-bounce" />
-            <div className="font-semibold text-stone-900 dark:text-stone-100">Telegram Connected!</div>
+            <div className="font-semibold text-stone-900 dark:text-stone-100">Connected!</div>
             <div className="text-xs text-stone-500 dark:text-stone-400">Saved Messages session initialized successfully.</div>
           </div>
         )}
