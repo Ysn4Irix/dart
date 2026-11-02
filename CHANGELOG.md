@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.10.5] - 2026-11-02
+
+### Fixed
+- **pnpm v11 `allowBuilds` Support:** Configured the `allowBuilds` map in `pnpm-workspace.yaml` (`esbuild: true`, `bufferutil: false`, `utf-8-validate: false`, `es5-ext: false`). pnpm v11 deprecated legacy `onlyBuiltDependencies` and `ignoredBuiltDependencies`, requiring explicit boolean mapping in `allowBuilds` to authorize required build scripts (`esbuild`) while blocking optional native bindings without throwing `ERR_PNPM_IGNORED_BUILDS`.
+
 ## [0.10.4] - 2026-11-02
 
 ### Fixed
