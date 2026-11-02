@@ -48,7 +48,7 @@
 
 ### Prerequisites
 
-- Node.js (v20+ or v24 LTS)
+- Node.js (v22+ LTS or v24)
 - pnpm (v10 or v11)
 - Telegram `API ID` and `API Hash` from [my.telegram.org](https://my.telegram.org)
 

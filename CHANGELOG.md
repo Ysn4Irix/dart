@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.10.3] - 2026-11-02
+
+### Fixed
+- **Node.js 22 LTS in GitHub Actions Workflows:** Upgraded `node-version` from `20` to `22` in both `.github/workflows/ci.yml` and `.github/workflows/release.yml`. Node.js 22+ is required for the native `node:sqlite` (`DatabaseSync`) module introduced in Node v22.5.0.
+- **Database Self-Initialization on Connection:** Added automatic `initDatabase()` invocation inside `getDatabase()` in `server/src/db/index.ts`. Guarantees all SQLite tables exist immediately when repositories or test suites run in clean environments without needing an explicit application bootstrap.
+
 ## [0.10.2] - 2026-11-02
 
 ### Removed
