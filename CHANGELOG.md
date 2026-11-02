@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.10.1] - 2026-11-02
+
+### Fixed
+- **CI Test Runner File Pattern:** Updated the test command in `server/package.json` to `"test": "tsx --test --test-concurrency=1 test/*.test.ts"`. Resolves `Could not find 'test/**/*.test.ts'` errors under POSIX environments (e.g., GitHub Actions Ubuntu runner `/bin/sh`) where recursive globbing without matching subdirectories leaves literal patterns unexpanded.
+- **SQLite Concurrency Busy Timeout:** Added `sqlite.exec('PRAGMA busy_timeout = 5000;')` in `server/src/db/index.ts` alongside `--test-concurrency=1` to guarantee graceful lock waiting and prevent transient `Error: database is locked` exceptions during sequential or parallel database calls.
+
 ## [0.10.0] - 2026-11-02
 
 ### Added
