@@ -54,7 +54,7 @@ COPY --chown=node:node package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY --chown=node:node server/package.json ./server/
 
 # Install only production dependencies
-RUN pnpm --filter dart-server install --prod --frozen-lockfile
+RUN pnpm --filter dart-server install --prod --frozen-lockfile --ignore-scripts
 
 # Copy compiled server distribution and built frontend static assets
 COPY --chown=node:node --from=builder /app/server/dist ./server/dist

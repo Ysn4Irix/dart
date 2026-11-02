@@ -4,3 +4,8 @@ packages:
 
 onlyBuiltDependencies:
   - esbuild
+
+ignoredBuiltDependencies:
+  - bufferutil
+  - utf-8-validate
+  - es5-ext

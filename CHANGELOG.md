@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.10.4] - 2026-11-02
+
+### Fixed
+- **Docker Production Install Lifecycle Scripts:** Added `ignoredBuiltDependencies` for optional WebSocket native bindings (`bufferutil`, `utf-8-validate`, `es5-ext`) in `pnpm-workspace.yaml`, and passed `--ignore-scripts` to `pnpm --filter dart-server install --prod` in `Dockerfile`. Resolves `ERR_PNPM_IGNORED_BUILDS` during Docker container builds in pnpm v10+.
+
 ## [0.10.3] - 2026-11-02
 
 ### Fixed
