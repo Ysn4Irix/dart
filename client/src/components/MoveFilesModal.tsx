@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Folder as FolderIcon, X, Plus, FolderInput, HardDrive, Check, Loader2 } from 'lucide-react';
 import { Folder } from '../types.js';
 import { useDialog } from '../context/DialogContext.js';
+import { useToast } from '../context/ToastContext.js';
 import { api } from '../api.js';
 
 interface MoveFilesModalProps {
@@ -24,6 +25,7 @@ export const MoveFilesModal: React.FC<MoveFilesModalProps> = ({
   onFolderCreated,
 }) => {
   const dialog = useDialog();
+  const toast = useToast();
   const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isCreatingFolder, setIsCreatingFolder] = useState(false);
@@ -63,13 +65,10 @@ export const MoveFilesModal: React.FC<MoveFilesModalProps> = ({
         const newFolder = await api.createFolder(name.trim(), null);
         if (onFolderCreated) onFolderCreated();
         setSelectedFolderId(newFolder.id);
+        toast.success('Folder Created', `Created folder "${newFolder.name}" and selected as target`);
       } catch (err: unknown) {
         const error = err as Error;
-        await dialog.alert({
-          title: 'Folder Creation Failed',
-          message: error.message || 'Could not create folder',
-          type: 'error',
-        });
+        toast.error('Folder Creation Failed', error.message || 'Could not create folder');
       } finally {
         setIsCreatingFolder(false);
       }

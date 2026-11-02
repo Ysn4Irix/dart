@@ -1,6 +1,6 @@
 {
   "name": "dart",
-  "version": "0.12.0",
+  "version": "0.13.0",
   "private": true,
   "description": "Transform Telegram's Saved Messages into an organized, private cloud storage system",
   "scripts": {

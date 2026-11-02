@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.13.0] - 2026-11-02
+
+### Added
+- **Content-Aware File Loading Skeletons:** Implemented responsive animated shimmer card and row skeleton states for grid and list view modes in `<FileGrid>`, preventing the empty-storage card ("No files displayed yet") from flashing while drive contents are loading.
+- **Graceful Toast Notification System (`ToastContext`):** Introduced a non-intrusive, accessible toast notification manager supporting `success`, `error`, `info`, and `warning` notifications with auto-dismiss timers, pause-on-hover, custom actions, and smooth slide/fade animations adhering strictly to clean card styling without decorative badges.
+- **React Runtime Error Boundary (`ErrorBoundary`):** Added a top-level error boundary capturing unexpected React rendering exceptions, presenting a branded recovery interface with diagnostic stack details, "Reload Application", "Return to Home", and "Copy Diagnostics" capabilities.
+- **Custom 404 Not Found Page (`NotFoundPage`):** Created a branded Dart 404 error page for unmatched URLs or non-existent assets with theme-toggle support and instant navigation back to the dashboard.
+- **Enhanced Public Share Error View:** Replaced generic alert cards on `/s/:slug` with an informative branded inactive share view distinguishing between expired links, missing files, and revoked access.
+
+### Changed
+- **Replaced Disruptive Modal Alerts:** Migrated file and folder operational feedback (creations, deletions, moves, uploads, syncs, copy link) from blocking modal alerts to graceful toast notifications while preserving `dialog.confirm` for destructive operations.
+
 ## [0.12.0] - 2026-11-02
 
 ### Added

@@ -140,6 +140,7 @@ interface FileGridProps {
   onFolderCreated?: () => void;
   onSync?: () => void;
   isSyncing?: boolean;
+  isLoading?: boolean;
 }
 
 const CATEGORIES: { id: FileCategory; label: string }[] = [
@@ -270,6 +271,7 @@ export const FileGrid: React.FC<FileGridProps> = ({
   onFolderCreated,
   onSync,
   isSyncing = false,
+  isLoading = false,
 }) => {
   const currentFolder = folders.find((f) => f.id === currentFolderId);
 
@@ -747,7 +749,55 @@ export const FileGrid: React.FC<FileGridProps> = ({
 
       {/* Main Content Area */}
       <div ref={scrollContainerRef} className="flex-1 overflow-y-auto p-6">
-        {files.length === 0 ? (
+        {isLoading ? (
+          /* SKELETON LOADING STATE */
+          viewMode === 'grid' ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
+              {Array.from({ length: Math.min(pageSize > 0 ? pageSize : 12, 18) }).map((_, idx) => (
+                <div
+                  key={`skeleton-${idx}`}
+                  className="rounded-xl p-4 bg-stone-50/80 dark:bg-stone-800/40 border border-stone-200/80 dark:border-stone-800 animate-pulse flex flex-col justify-between h-[152px]"
+                >
+                  <div>
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="w-9 h-9 rounded-lg bg-stone-200 dark:bg-stone-700/60" />
+                      <div className="w-4 h-4 rounded bg-stone-200/70 dark:bg-stone-700/40" />
+                    </div>
+                    <div
+                      className="h-4 bg-stone-200 dark:bg-stone-700/60 rounded-md mb-2"
+                      style={{ width: `${60 + (idx % 4) * 10}%` }}
+                    />
+                    <div className="h-3 w-2/5 bg-stone-200/60 dark:bg-stone-700/40 rounded-md" />
+                  </div>
+                  <div className="flex items-center justify-between pt-3 border-t border-stone-100 dark:border-stone-800/60">
+                    <div className="h-3 w-1/3 bg-stone-200/60 dark:bg-stone-700/40 rounded-md" />
+                    <div className="h-3 w-1/4 bg-stone-200/60 dark:bg-stone-700/40 rounded-md" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            /* LIST SKELETON STATE */
+            <div className="bg-white dark:bg-stone-800/30 border border-stone-200 dark:border-stone-800 rounded-xl overflow-hidden shadow-2xs">
+              <div className="divide-y divide-stone-100 dark:divide-stone-800/60 animate-pulse">
+                {Array.from({ length: Math.min(pageSize > 0 ? pageSize : 10, 12) }).map((_, idx) => (
+                  <div key={`row-skeleton-${idx}`} className="py-3 px-4 flex items-center justify-between gap-4">
+                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                      <div className="w-4 h-4 rounded bg-stone-200 dark:bg-stone-700/60 shrink-0" />
+                      <div className="w-6 h-6 rounded bg-stone-200/80 dark:bg-stone-700/50 shrink-0" />
+                      <div
+                        className="h-4 bg-stone-200 dark:bg-stone-700/60 rounded-md"
+                        style={{ width: `${40 + (idx % 5) * 12}%` }}
+                      />
+                    </div>
+                    <div className="h-3 w-20 bg-stone-200/60 dark:bg-stone-700/40 rounded-md hidden sm:block" />
+                    <div className="h-3 w-16 bg-stone-200/60 dark:bg-stone-700/40 rounded-md" />
+                  </div>
+                ))}
+              </div>
+            </div>
+          )
+        ) : files.length === 0 ? (
           /* Empty Storage State */
           <div className="h-64 flex flex-col items-center justify-center text-center text-stone-500 border border-dashed border-stone-300 dark:border-stone-800 rounded-xl p-6 bg-stone-50/50 dark:bg-transparent">
             <FileText className="w-10 h-10 mb-3 text-stone-400 dark:text-stone-600" />
@@ -1166,7 +1216,7 @@ export const FileGrid: React.FC<FileGridProps> = ({
       </div>
 
       {/* Responsive Pagination Bar */}
-      {totalFiles > 0 && (
+      {!isLoading && totalFiles > 0 && (
         <div className="px-6 py-3 border-t border-stone-200 dark:border-stone-800 bg-white/70 dark:bg-stone-900/60 backdrop-blur flex flex-wrap items-center justify-between gap-3 text-xs text-stone-600 dark:text-stone-400">
           {/* Left: Showing range plain text */}
           <div className="flex items-center gap-2">

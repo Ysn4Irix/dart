@@ -10,20 +10,15 @@ import { AuthModal } from './components/AuthModal.js';
 import { LoginScreen } from './components/LoginScreen.js';
 import { DartLogo } from './components/DartLogo.js';
 import { PublicSharePage } from './pages/PublicSharePage.js';
+import { NotFoundPage } from './pages/NotFoundPage.js';
 import { api, formatBytes } from './api.js';
 import { useDialog } from './context/DialogContext.js';
+import { useToast } from './context/ToastContext.js';
 import { AppUser, AuthStatus, FileRecord, Folder, SetupStatus, Theme } from './types.js';
 
 export function App() {
   const dialog = useDialog();
-  // Check if we are on a public share link route: /s/:slug
-  const path = window.location.pathname;
-  if (path.startsWith('/s/')) {
-    const slug = path.replace('/s/', '').split('/')[0];
-    if (slug) {
-      return <PublicSharePage slug={slug} />;
-    }
-  }
+  const toast = useToast();
 
   // Theme state (light / dark)
   const [theme, setTheme] = useState<Theme>(() => {
@@ -70,6 +65,20 @@ export function App() {
     }, 250);
   };
 
+  // Route matching: Public share link /s/:slug or 404 fallback
+  const path = window.location.pathname;
+  if (path.startsWith('/s/')) {
+    const slug = path.replace('/s/', '').split('/')[0];
+    if (slug) {
+      return <PublicSharePage slug={slug} />;
+    }
+    return <NotFoundPage theme={theme} onToggleTheme={handleToggleTheme} />;
+  }
+
+  if (path !== '/' && path !== '') {
+    return <NotFoundPage theme={theme} onToggleTheme={handleToggleTheme} />;
+  }
+
   // Master Authentication & Onboarding state
   const [setupStatus, setSetupStatus] = useState<SetupStatus | null>(null);
   const [currentUser, setCurrentUser] = useState<AppUser | null>(null);
@@ -79,6 +88,7 @@ export function App() {
   const [authStatus, setAuthStatus] = useState<AuthStatus | null>(null);
   const [folders, setFolders] = useState<Folder[]>([]);
   const [files, setFiles] = useState<FileRecord[]>([]);
+  const [isLoadingFiles, setIsLoadingFiles] = useState(true);
   const [currentFolderId, setCurrentFolderId] = useState<string | null>(null);
   const [search, setSearch] = useState('');
 
@@ -181,28 +191,36 @@ export function App() {
     if (!currentUser) return;
     setIsSyncing(true);
     try {
-      await api.syncFiles();
+      const res = await api.syncFiles();
       const [status, loadedFolders, loadedFiles] = await Promise.all([
         api.getAuthStatus(),
         api.getFolders(null),
-        api.getFiles(currentFolderId, search),
+        api.getFiles(currentFolderId === '__recent__' ? null : currentFolderId, search),
       ]);
       setAuthStatus(status);
       setFolders(loadedFolders);
       setFiles(loadedFiles);
+      toast.success(
+        'Sync Complete',
+        res.added > 0
+          ? `Scanned ${res.scanned} messages, added ${res.added} new files.`
+          : `Scanned ${res.scanned} messages. All files are up to date.`
+      );
     } catch (err: unknown) {
       const e = err as Error;
       if (e.message.includes('401') || e.message.toLowerCase().includes('unauthorized')) {
         setCurrentUser(null);
       }
+      toast.error('Sync Failed', e.message || 'Failed to scan Saved Messages.');
       console.error('Sync failed:', e.message);
     } finally {
       setIsSyncing(false);
     }
   };
 
-  const loadData = async () => {
+  const loadData = async (isSilent = false) => {
     if (!currentUser) return;
+    if (!isSilent) setIsLoadingFiles(true);
     try {
       const folderParam = currentFolderId === '__recent__' ? null : currentFolderId;
       const [status, loadedFolders, loadedFiles] = await Promise.all([
@@ -224,7 +242,10 @@ export function App() {
       if (e.message && (e.message.includes('401') || e.message.toLowerCase().includes('unauthorized'))) {
         setCurrentUser(null);
       }
+      toast.error('Loading Error', 'Failed to retrieve folder contents.');
       console.error('Error loading drive data:', err);
+    } finally {
+      if (!isSilent) setIsLoadingFiles(false);
     }
   };
 
@@ -289,14 +310,11 @@ export function App() {
     if (name && name.trim()) {
       try {
         await api.createFolder(name.trim(), currentFolderId);
+        toast.success('Folder Created', `Created folder "${name.trim()}"`);
         loadData();
       } catch (err: unknown) {
         const e = err as Error;
-        await dialog.alert({
-          title: 'Failed to Create Folder',
-          message: e.message || 'Could not create folder. Please try again.',
-          type: 'error',
-        });
+        toast.error('Failed to Create Folder', e.message || 'Could not create folder. Please try again.');
       }
     }
   };
@@ -317,14 +335,11 @@ export function App() {
       if (currentFolderId === id) {
         setCurrentFolderId(null);
       }
+      toast.success('Folder Deleted', `Deleted "${name}"`);
       loadData();
     } catch (err: unknown) {
       const e = err as Error;
-      await dialog.alert({
-        title: 'Failed to Delete Folder',
-        message: e.message || 'Could not delete folder.',
-        type: 'error',
-      });
+      toast.error('Failed to Delete Folder', e.message || 'Could not delete folder.');
     }
   };
 
@@ -350,14 +365,11 @@ export function App() {
 
     try {
       await api.deleteFile(file.id);
-      loadData();
+      toast.success('File Deleted', `Deleted "${file.name}"`);
+      loadData(true);
     } catch (err: unknown) {
       const e = err as Error;
-      await dialog.alert({
-        title: 'Deletion Failed',
-        message: e.message || 'Failed to delete file from Telegram.',
-        type: 'error',
-      });
+      toast.error('Deletion Failed', e.message || 'Failed to delete file from Telegram.');
       loadData();
     }
   };
@@ -390,14 +402,11 @@ export function App() {
 
     try {
       await api.bulkDelete(fileIds);
-      loadData();
+      toast.success('Files Deleted', `Successfully deleted ${fileIds.length} files`);
+      loadData(true);
     } catch (err: unknown) {
       const e = err as Error;
-      await dialog.alert({
-        title: 'Bulk Deletion Failed',
-        message: e.message || 'Failed to delete selected files.',
-        type: 'error',
-      });
+      toast.error('Bulk Deletion Failed', e.message || 'Failed to delete selected files.');
       loadData();
     }
   };
@@ -406,14 +415,12 @@ export function App() {
     if (fileIds.length === 0) return;
     try {
       await api.bulkMove(fileIds, folderId);
+      const destName = folderId ? folders.find((f) => f.id === folderId)?.name || 'target folder' : 'root drive';
+      toast.success('Files Moved', `Moved ${fileIds.length} ${fileIds.length === 1 ? 'file' : 'files'} to ${destName}`);
       loadData();
     } catch (err: unknown) {
       const e = err as Error;
-      await dialog.alert({
-        title: 'Move Failed',
-        message: e.message || 'Failed to move selected files.',
-        type: 'error',
-      });
+      toast.error('Move Failed', e.message || 'Failed to move selected files.');
     }
   };
 
@@ -423,13 +430,13 @@ export function App() {
     const totalSize = selected.reduce((acc, f) => acc + f.size, 0);
     const ONE_GB = 1024 * 1024 * 1024;
     if (totalSize > ONE_GB) {
-      dialog.alert({
-        title: 'Download Limit Exceeded',
-        message: `The total size of the selected files (${formatBytes(totalSize)}) exceeds the 1 GB batch limit. Please select fewer files.`,
-        type: 'error',
-      });
+      toast.error(
+        'Download Limit Exceeded',
+        `The total size of the selected files (${formatBytes(totalSize)}) exceeds the 1 GB batch limit. Please select fewer files.`
+      );
       return;
     }
+    toast.info('Preparing ZIP Archive', `Downloading ${fileIds.length} files as an archive...`);
     window.location.href = api.getZipDownloadUrl(fileIds);
   };
 
@@ -486,6 +493,7 @@ export function App() {
           onDelete={handleDeleteFile}
           onSync={handleSync}
           isSyncing={isSyncing}
+          isLoading={isLoadingFiles}
           onBulkDelete={handleBulkDelete}
           onBulkMove={handleBulkMove}
           onBulkDownloadZip={handleBulkDownloadZip}
@@ -519,6 +527,7 @@ export function App() {
         folderId={currentFolderId}
         onUploadComplete={() => {
           setDroppedFile(null);
+          toast.success('Upload Complete', 'File uploaded successfully to Telegram Saved Messages');
           loadData();
         }}
       />

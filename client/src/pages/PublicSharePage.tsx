@@ -3,8 +3,9 @@ import {
   Download,
   Send,
   Clock,
-  AlertCircle,
   Loader2,
+  FileX,
+  Home,
 } from 'lucide-react';
 import { PublicShareDetails } from '../types.js';
 import { api, formatBytes } from '../api.js';
@@ -31,8 +32,8 @@ export const PublicSharePage: React.FC<PublicSharePageProps> = ({ slug }) => {
     return (
       <div className="min-h-screen bg-stone-50 dark:bg-stone-900 flex items-center justify-center p-4 transition-colors">
         <div className="flex items-center gap-3 text-stone-500 dark:text-stone-400">
-          <Loader2 className="w-5 h-5 animate-spin" />
-          <span>Loading shared file...</span>
+          <Loader2 className="w-5 h-5 animate-spin text-emerald-600 dark:text-emerald-400" />
+          <span className="text-sm font-medium">Retrieving shared file...</span>
         </div>
       </div>
     );
@@ -40,12 +41,45 @@ export const PublicSharePage: React.FC<PublicSharePageProps> = ({ slug }) => {
 
   if (error || !details) {
     return (
-      <div className="min-h-screen bg-stone-50 dark:bg-stone-900 flex items-center justify-center p-4 transition-colors">
-        <div className="bg-white dark:bg-stone-800/60 border border-stone-200 dark:border-stone-800 rounded-2xl p-8 max-w-md w-full text-center space-y-4 shadow-xl">
-          <AlertCircle className="w-12 h-12 text-amber-500 mx-auto" />
-          <h2 className="text-xl font-semibold text-stone-900 dark:text-stone-100">Link Unavailable</h2>
-          <p className="text-sm text-stone-600 dark:text-stone-400">{error || 'This file is no longer accessible.'}</p>
-        </div>
+      <div className="min-h-screen w-full flex flex-col justify-between bg-stone-50 dark:bg-stone-950 text-stone-900 dark:text-stone-100 p-6 sm:p-10 transition-colors">
+        <header className="w-full max-w-4xl mx-auto flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="p-1.5 rounded-lg bg-stone-100 dark:bg-stone-800/80 border border-stone-200 dark:border-stone-700/60 shadow-xs">
+              <DartLogo size={24} />
+            </div>
+            <span className="font-semibold text-stone-900 dark:text-stone-100 text-lg tracking-tight">Dart</span>
+          </div>
+        </header>
+
+        <main className="w-full max-w-md mx-auto my-auto py-8">
+          <div className="bg-white dark:bg-stone-900 rounded-2xl border border-stone-200 dark:border-stone-800 shadow-xl p-8 text-center transition-colors">
+            <div className="w-14 h-14 rounded-2xl bg-stone-100 dark:bg-stone-800/80 border border-stone-200 dark:border-stone-700 flex items-center justify-center mx-auto mb-5">
+              <FileX className="w-7 h-7 text-amber-500 dark:text-amber-400" />
+            </div>
+            <div className="text-xs font-semibold tracking-wider uppercase text-stone-400 dark:text-stone-500 mb-1">
+              Share Link Inactive
+            </div>
+            <h1 className="text-2xl font-bold tracking-tight text-stone-900 dark:text-stone-50 mb-3">
+              File Unavailable
+            </h1>
+            <p className="text-sm text-stone-600 dark:text-stone-400 leading-relaxed mb-8">
+              {error || 'This shared link has expired or the file has been deleted by its owner.'}
+            </p>
+            <div className="flex items-center justify-center">
+              <a
+                href="/"
+                className="flex items-center justify-center gap-2 px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-medium rounded-lg transition-colors cursor-pointer shadow-xs"
+              >
+                <Home className="w-4 h-4" />
+                <span>Return to Dart</span>
+              </a>
+            </div>
+          </div>
+        </main>
+
+        <footer className="w-full max-w-4xl mx-auto text-center text-xs text-stone-500 dark:text-stone-400 py-4">
+          Dart Cloud Storage &bull; Private Telegram MTProto Storage Engine
+        </footer>
       </div>
     );
   }

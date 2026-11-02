@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { X, Copy, Check, ExternalLink } from 'lucide-react';
 import { FileRecord } from '../types.js';
 import { api } from '../api.js';
-import { useDialog } from '../context/DialogContext.js';
+import { useToast } from '../context/ToastContext.js';
 
 interface ShareModalProps {
   isOpen: boolean;
@@ -11,7 +11,7 @@ interface ShareModalProps {
 }
 
 export const ShareModal: React.FC<ShareModalProps> = ({ isOpen, onClose, file }) => {
-  const dialog = useDialog();
+  const toast = useToast();
   const [copied, setCopied] = useState(false);
   const [expiresIn, setExpiresIn] = useState<number | undefined>(undefined);
   const [shareUrl, setShareUrl] = useState<string | null>(null);
@@ -25,12 +25,9 @@ export const ShareModal: React.FC<ShareModalProps> = ({ isOpen, onClose, file })
       const res = await api.createShare(file.id, expiresIn);
       const fullUrl = `${window.location.origin}/s/${res.share.id}`;
       setShareUrl(fullUrl);
-    } catch (err) {
-      dialog.alert({
-        title: 'Share Error',
-        message: 'Failed to generate public share link. Please try again.',
-        type: 'error',
-      });
+      toast.success('Link Generated', 'Public share link is ready to copy');
+    } catch {
+      toast.error('Share Error', 'Failed to generate public share link. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -40,6 +37,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({ isOpen, onClose, file })
     if (shareUrl) {
       navigator.clipboard.writeText(shareUrl);
       setCopied(true);
+      toast.success('Link Copied', 'Public share link copied to clipboard');
       setTimeout(() => setCopied(false), 2000);
     }
   };
