@@ -7,7 +7,7 @@ interface SidebarProps {
   folders: Folder[];
   currentFolderId: string | null;
   onSelectFolder: (id: string | null) => void;
-  onDeleteFolder: (id: string) => void;
+  onDeleteFolder: (id: string, name?: string) => void;
   onNewFolder: () => void;
   totalFilesCount: number;
   totalSize: number;
@@ -96,9 +96,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      if (confirm(`Delete folder "${folder.name}"?`)) {
-                        onDeleteFolder(folder.id);
-                      }
+                      onDeleteFolder(folder.id, folder.name);
                     }}
                     className="opacity-0 group-hover:opacity-100 p-1 text-stone-400 hover:text-red-500 dark:text-stone-500 dark:hover:text-red-400 transition-opacity cursor-pointer"
                     title="Delete folder"

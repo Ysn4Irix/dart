@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.0] - 2026-11-02
+
+### Added
+- **Custom Dialog System (`useDialog` & `<DialogProvider>`):** Implemented an accessible dialog system completely eliminating native browser `window.alert()`, `window.confirm()`, and `window.prompt()`.
+- **Custom Confirm Dialogs:** Styled confirmation modals with destructive/danger variants, clear explanatory copy, and keyboard shortcuts (`Enter` to confirm, `Escape` to cancel) for folder and file deletion.
+- **Custom Prompt Dialogs:** Themed modal prompts with auto-focus inputs, inline validation, and Enter-key submission for folder creation.
+- **Custom Alert Dialogs:** Non-blocking alert modals for operation failures, error feedback, and system notices with status-specific icons (error, warning, info, success).
+- **Zero Decorative Badges:** Preserved strict anti-slop guidelines with clean typography, backdrop blur, and light/dark theme synchronization.
+
 ## [0.7.1] - 2026-11-02
 
 ### Fixed

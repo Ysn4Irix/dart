@@ -11,9 +11,11 @@ import { LoginScreen } from './components/LoginScreen.js';
 import { DartLogo } from './components/DartLogo.js';
 import { PublicSharePage } from './pages/PublicSharePage.js';
 import { api } from './api.js';
+import { useDialog } from './context/DialogContext.js';
 import { AppUser, AuthStatus, FileRecord, Folder, SetupStatus, Theme } from './types.js';
 
 export function App() {
+  const dialog = useDialog();
   // Check if we are on a public share link route: /s/:slug
   const path = window.location.pathname;
   if (path.startsWith('/s/')) {
@@ -196,52 +198,87 @@ export function App() {
 
   // 4. Authenticated Cloud Storage Dashboard
   const handleCreateFolder = async () => {
-    const name = window.prompt('Enter folder name:');
+    const name = await dialog.prompt({
+      title: 'New Folder',
+      message: 'Enter a name for the new folder:',
+      placeholder: 'e.g. Documents, Invoices, Backups',
+      confirmText: 'Create Folder',
+      validate: (val) => (!val.trim() ? 'Folder name cannot be empty' : null),
+    });
+
     if (name && name.trim()) {
       try {
         await api.createFolder(name.trim(), currentFolderId);
         loadData();
-      } catch (err) {
-        alert('Failed to create folder');
+      } catch (err: unknown) {
+        const e = err as Error;
+        await dialog.alert({
+          title: 'Failed to Create Folder',
+          message: e.message || 'Could not create folder. Please try again.',
+          type: 'error',
+        });
       }
     }
   };
 
-  const handleDeleteFolder = async (id: string) => {
+  const handleDeleteFolder = async (id: string, folderName?: string) => {
+    const name = folderName || folders.find((f) => f.id === id)?.name || 'this folder';
+    const confirmed = await dialog.confirm({
+      title: 'Delete Folder',
+      message: `Are you sure you want to delete "${name}"?\nFiles inside will not be deleted; they will be moved to the root drive.`,
+      confirmText: 'Delete Folder',
+      variant: 'danger',
+    });
+
+    if (!confirmed) return;
+
     try {
       await api.deleteFolder(id);
       if (currentFolderId === id) {
         setCurrentFolderId(null);
       }
       loadData();
-    } catch (err) {
-      alert('Failed to delete folder');
+    } catch (err: unknown) {
+      const e = err as Error;
+      await dialog.alert({
+        title: 'Failed to Delete Folder',
+        message: e.message || 'Could not delete folder.',
+        type: 'error',
+      });
     }
   };
 
   const handleDeleteFile = async (file: FileRecord) => {
-    if (
-      confirm(
-        `Delete "${file.name}"?\nThis will permanently delete it from Dart and your Telegram Saved Messages.`
-      )
-    ) {
-      // 1. Optimistic removal for instant UI response
-      setFiles((prev) => prev.filter((f) => f.id !== file.id));
-      if (previewTargetFile?.id === file.id) {
-        setPreviewTargetFile(null);
-      }
-      if (shareTargetFile?.id === file.id) {
-        setShareTargetFile(null);
-      }
+    const confirmed = await dialog.confirm({
+      title: 'Delete File',
+      message: `Are you sure you want to delete "${file.name}"?\nThis will permanently remove it from Dart and your Telegram Saved Messages.`,
+      confirmText: 'Delete Permanently',
+      variant: 'danger',
+      icon: 'trash',
+    });
 
-      try {
-        await api.deleteFile(file.id);
-        loadData();
-      } catch (err: unknown) {
-        const e = err as Error;
-        alert(`Failed to delete file: ${e.message}`);
-        loadData();
-      }
+    if (!confirmed) return;
+
+    // 1. Optimistic removal for instant UI response
+    setFiles((prev) => prev.filter((f) => f.id !== file.id));
+    if (previewTargetFile?.id === file.id) {
+      setPreviewTargetFile(null);
+    }
+    if (shareTargetFile?.id === file.id) {
+      setShareTargetFile(null);
+    }
+
+    try {
+      await api.deleteFile(file.id);
+      loadData();
+    } catch (err: unknown) {
+      const e = err as Error;
+      await dialog.alert({
+        title: 'Deletion Failed',
+        message: e.message || 'Failed to delete file from Telegram.',
+        type: 'error',
+      });
+      loadData();
     }
   };
 
