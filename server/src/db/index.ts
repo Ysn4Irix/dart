@@ -197,6 +197,14 @@ export const fileRepo = {
     return (result as unknown as FileRecord) || null;
   },
 
+  getByIds(ids: string[]): FileRecord[] {
+    if (!ids.length) return [];
+    const db = getDatabase();
+    const placeholders = ids.map(() => '?').join(',');
+    const stmt = db.prepare(`SELECT * FROM files WHERE id IN (${placeholders})`);
+    return stmt.all(...ids) as unknown as FileRecord[];
+  },
+
   getByMessageId(telegramMessageId: number): FileRecord | null {
     const db = getDatabase();
     const stmt = db.prepare('SELECT * FROM files WHERE telegram_message_id = ?');
@@ -261,6 +269,23 @@ export const fileRepo = {
     stmt.run(folderId, id);
   },
 
+  bulkMove(ids: string[], folderId: string | null): number {
+    if (!ids.length) return 0;
+    const db = getDatabase();
+    const stmt = db.prepare('UPDATE files SET folder_id = ? WHERE id = ?');
+    db.exec('BEGIN TRANSACTION');
+    try {
+      for (const id of ids) {
+        stmt.run(folderId, id);
+      }
+      db.exec('COMMIT');
+      return ids.length;
+    } catch (err) {
+      db.exec('ROLLBACK');
+      throw err;
+    }
+  },
+
   rename(id: string, name: string): void {
     const db = getDatabase();
     const stmt = db.prepare('UPDATE files SET name = ? WHERE id = ?');
@@ -272,6 +297,23 @@ export const fileRepo = {
     const stmt = db.prepare('DELETE FROM files WHERE id = ?');
     stmt.run(id);
   },
+
+  bulkDelete(ids: string[]): number {
+    if (!ids.length) return 0;
+    const db = getDatabase();
+    const stmt = db.prepare('DELETE FROM files WHERE id = ?');
+    db.exec('BEGIN TRANSACTION');
+    try {
+      for (const id of ids) {
+        stmt.run(id);
+      }
+      db.exec('COMMIT');
+      return ids.length;
+    } catch (err) {
+      db.exec('ROLLBACK');
+      throw err;
+    }
+  },
 };
 
 // ================= Deleted Messages Tombstone =================
@@ -282,6 +324,25 @@ export const deletedMessageRepo = {
       'INSERT OR REPLACE INTO deleted_messages (telegram_message_id, deleted_at) VALUES (?, ?)'
     );
     stmt.run(messageId, Date.now());
+  },
+
+  bulkAdd(messageIds: number[]): void {
+    if (!messageIds.length) return;
+    const db = getDatabase();
+    const stmt = db.prepare(
+      'INSERT OR REPLACE INTO deleted_messages (telegram_message_id, deleted_at) VALUES (?, ?)'
+    );
+    const now = Date.now();
+    db.exec('BEGIN TRANSACTION');
+    try {
+      for (const id of messageIds) {
+        stmt.run(id, now);
+      }
+      db.exec('COMMIT');
+    } catch (err) {
+      db.exec('ROLLBACK');
+      throw err;
+    }
   },
 
   isDeleted(messageId: number): boolean {

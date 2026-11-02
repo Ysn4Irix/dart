@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.0] - 2026-11-02
+
+### Added
+- **Multi-File Selection & Bulk Actions:** Comprehensive selection management supporting per-card checkboxes, hover overlays, keyboard range selection (Shift+Click), "Select All" / "Deselect All" toolbar controls, and table header toggles.
+- **Floating Bulk Action Bar (`<BulkActionBar>`):** Bottom-anchored action bar displaying the count of selected files, combined byte size, real-time 1 GB ZIP threshold indicator, and one-click actions: "Download ZIP", "Move", "Delete", and "Deselect".
+- **Destination Folder Organizer Modal (`<MoveFilesModal>`):** Interactive dialog allowing users to batch relocate files to any folder or back to Root Drive ("All Files"). Features quick "+ New Folder" folder creation directly within the dialog with instant folder selection.
+- **Streaming Bulk ZIP Downloader:** Backend streaming endpoint (`GET /api/files/download-zip?ids=...` and `POST /api/files/download-zip`) powered by `archiver` ZipArchive. Downloads multiple Telegram files directly into a consolidated `.zip` archive sequentially on the fly with zero disk consumption, client disconnect cancellation, and automatic filename collision resolution (`file (1).txt`).
+- **Batch Atomic Database Operations:** Added `fileRepo.bulkMove`, `fileRepo.bulkDelete`, `fileRepo.getByIds`, and `deletedMessageRepo.bulkAdd` running within atomic SQLite transactions for high performance and integrity.
+- **Safety Batch Limit:** Enforced 1 GB maximum batch size protection with client-side warnings and backend HTTP 400 enforcement to prevent network timeouts.
+- **Comprehensive Unit Testing:** Added `server/test/bulk.test.ts` verifying bulk retrieval, multi-file atomic moves, root relocations, batch tombstones, and bulk deletions.
+
 ## [0.8.2] - 2026-11-02
 
 ### Changed

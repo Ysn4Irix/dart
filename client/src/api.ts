@@ -188,6 +188,36 @@ export const api = {
     if (!res.ok) throw new Error('Failed to delete file');
   },
 
+  async bulkDelete(ids: string[]): Promise<{ success: boolean; count: number; telegramDeletedCount: number }> {
+    const res = await fetch(`${API_BASE}/api/files/bulk-delete`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ids }),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || 'Failed to delete selected files');
+    }
+    return res.json();
+  },
+
+  async bulkMove(ids: string[], folderId: string | null): Promise<{ success: boolean; count: number }> {
+    const res = await fetch(`${API_BASE}/api/files/bulk-move`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ids, folderId }),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || 'Failed to move selected files');
+    }
+    return res.json();
+  },
+
+  getZipDownloadUrl(ids: string[]): string {
+    return `${API_BASE}/api/files/download-zip?ids=${encodeURIComponent(ids.join(','))}`;
+  },
+
   async renameFile(id: string, name: string): Promise<void> {
     const res = await fetch(`${API_BASE}/api/files/${encodeURIComponent(id)}`, {
       method: 'PATCH',

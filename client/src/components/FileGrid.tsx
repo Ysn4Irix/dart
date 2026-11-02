@@ -21,9 +21,12 @@ import {
   Filter,
   Calendar,
   Clock,
+  Check,
 } from 'lucide-react';
 import { FileRecord, Folder } from '../types.js';
 import { formatBytes } from '../api.js';
+import { BulkActionBar } from './BulkActionBar.js';
+import { MoveFilesModal } from './MoveFilesModal.js';
 
 export type FileCategory = 'all' | 'documents' | 'media' | 'audio' | 'archives' | 'apps' | 'code';
 export type DateFilter = 'all' | 'today' | 'week' | 'month' | 'year';
@@ -130,6 +133,10 @@ interface FileGridProps {
   onDownload: (file: FileRecord) => void;
   onShare: (file: FileRecord) => void;
   onDelete: (file: FileRecord) => void;
+  onBulkDelete?: (fileIds: string[]) => Promise<void>;
+  onBulkMove?: (fileIds: string[], folderId: string | null) => Promise<void>;
+  onBulkDownloadZip?: (fileIds: string[]) => void;
+  onFolderCreated?: () => void;
   onSync?: () => void;
   isSyncing?: boolean;
 }
@@ -256,10 +263,38 @@ export const FileGrid: React.FC<FileGridProps> = ({
   onDownload,
   onShare,
   onDelete,
+  onBulkDelete,
+  onBulkMove,
+  onBulkDownloadZip,
+  onFolderCreated,
   onSync,
   isSyncing = false,
 }) => {
   const currentFolder = folders.find((f) => f.id === currentFolderId);
+
+  // Multi-selection state
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [lastSelectedId, setLastSelectedId] = useState<string | null>(null);
+  const [isMoveModalOpen, setIsMoveModalOpen] = useState(false);
+  const [isProcessingBulk, setIsProcessingBulk] = useState(false);
+
+  // Clear selection on folder navigation
+  useEffect(() => {
+    setSelectedIds(new Set());
+    setLastSelectedId(null);
+  }, [currentFolderId]);
+
+  // Escape key deselects all
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && selectedIds.size > 0) {
+        setSelectedIds(new Set());
+        setLastSelectedId(null);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [selectedIds.size]);
 
   // View mode state (persisted)
   const [viewMode, setViewMode] = useState<ViewMode>(() => {
@@ -352,6 +387,72 @@ export const FileGrid: React.FC<FileGridProps> = ({
     });
   }, [files, selectedCategory, selectedDateFilter, sortOption]);
 
+  const activeFilteredFiles = useMemo(
+    () => filteredFiles.filter((f) => f.status !== 'missing'),
+    [filteredFiles]
+  );
+
+  const isAllSelected =
+    activeFilteredFiles.length > 0 &&
+    activeFilteredFiles.every((f) => selectedIds.has(f.id));
+
+  const handleToggleSelectAll = () => {
+    if (isAllSelected) {
+      setSelectedIds(new Set());
+      setLastSelectedId(null);
+    } else {
+      setSelectedIds(new Set(activeFilteredFiles.map((f) => f.id)));
+    }
+  };
+
+  const handleToggleSelect = (fileId: string, isShift: boolean = false) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (isShift && lastSelectedId) {
+        const lastIndex = filteredFiles.findIndex((f) => f.id === lastSelectedId);
+        const currentIndex = filteredFiles.findIndex((f) => f.id === fileId);
+        if (lastIndex !== -1 && currentIndex !== -1) {
+          const start = Math.min(lastIndex, currentIndex);
+          const end = Math.max(lastIndex, currentIndex);
+          for (let i = start; i <= end; i++) {
+            if (filteredFiles[i].status !== 'missing') {
+              next.add(filteredFiles[i].id);
+            }
+          }
+          return next;
+        }
+      }
+
+      if (next.has(fileId)) {
+        next.delete(fileId);
+      } else {
+        next.add(fileId);
+      }
+      return next;
+    });
+    setLastSelectedId(fileId);
+  };
+
+  const selectedFiles = useMemo(() => {
+    return files.filter((f) => selectedIds.has(f.id));
+  }, [files, selectedIds]);
+
+  const selectedTotalSize = useMemo(() => {
+    return selectedFiles.reduce((acc, f) => acc + f.size, 0);
+  }, [selectedFiles]);
+
+  const handleBulkDeleteAction = async () => {
+    if (!onBulkDelete || selectedIds.size === 0) return;
+    setIsProcessingBulk(true);
+    try {
+      await onBulkDelete(Array.from(selectedIds));
+      setSelectedIds(new Set());
+      setLastSelectedId(null);
+    } finally {
+      setIsProcessingBulk(false);
+    }
+  };
+
   const getFileIcon = (mime: string, name: string) => {
     if (name.endsWith('.apk')) return <Package className="w-5 h-5 text-emerald-400" />;
     if (mime.startsWith('image/')) return <ImageIcon className="w-5 h-5 text-emerald-400" />;
@@ -411,6 +512,34 @@ export const FileGrid: React.FC<FileGridProps> = ({
             {filteredFiles.length} {filteredFiles.length === 1 ? 'file' : 'files'}
             {filteredFiles.length !== files.length && ` (of ${files.length})`}
           </span>
+          {activeFilteredFiles.length > 0 && (
+            <>
+              <span className="text-stone-300 dark:text-stone-600 text-xs">•</span>
+              <button
+                type="button"
+                onClick={handleToggleSelectAll}
+                className="text-xs text-stone-500 hover:text-stone-800 dark:hover:text-stone-200 transition-colors cursor-pointer flex items-center gap-1.5"
+                title={isAllSelected ? 'Deselect all files' : 'Select all files'}
+              >
+                <div
+                  className={`w-3.5 h-3.5 rounded flex items-center justify-center transition-colors border ${
+                    isAllSelected
+                      ? 'bg-emerald-600 border-emerald-600 text-white'
+                      : selectedIds.size > 0
+                      ? 'bg-emerald-600/20 border-emerald-600 text-emerald-600 dark:text-emerald-400'
+                      : 'border-stone-300 dark:border-stone-600 hover:border-stone-400 bg-white dark:bg-stone-800'
+                  }`}
+                >
+                  {isAllSelected ? (
+                    <Check className="w-2.5 h-2.5 stroke-[2.5]" />
+                  ) : selectedIds.size > 0 ? (
+                    <span className="w-1.5 h-0.5 bg-emerald-600 dark:bg-emerald-400 rounded-full" />
+                  ) : null}
+                </div>
+                <span>{isAllSelected ? 'Deselect All' : 'Select All'}</span>
+              </button>
+            </>
+          )}
         </div>
 
         {/* View Mode & Sort Controls */}
@@ -595,19 +724,52 @@ export const FileGrid: React.FC<FileGridProps> = ({
               const isMissing = file.status === 'missing';
               const ext = getFileExtension(file.name);
               const dateInfo = formatFileDate(file.created_at);
+              const isSelected = selectedIds.has(file.id);
 
               return (
                 <div
                   key={file.id}
                   onClick={() => !isMissing && onPreview(file)}
-                  className={`group relative bg-stone-50/80 dark:bg-stone-800/40 border border-stone-200 dark:border-stone-800 rounded-xl p-4 hover:border-emerald-500/40 dark:hover:border-emerald-500/30 hover:bg-white dark:hover:bg-stone-800/70 shadow-2xs hover:shadow-xs transition-all flex flex-col justify-between cursor-pointer ${
+                  className={`group relative rounded-xl p-4 shadow-2xs hover:shadow-xs transition-all flex flex-col justify-between cursor-pointer border ${
+                    isSelected
+                      ? 'border-emerald-500 dark:border-emerald-500 bg-emerald-50/20 dark:bg-emerald-950/20 ring-1 ring-emerald-500/30'
+                      : 'bg-stone-50/80 dark:bg-stone-800/40 border-stone-200 dark:border-stone-800 hover:border-emerald-500/40 dark:hover:border-emerald-500/30 hover:bg-white dark:hover:bg-stone-800/70'
+                  } ${
                     isMissing ? 'opacity-60 border-red-300 dark:border-red-950/60 cursor-default' : ''
                   }`}
                 >
                   <div>
                     <div className="flex items-start justify-between mb-3">
-                      <div className="p-2.5 rounded-lg bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-700/40 shadow-2xs">
-                        {getFileIcon(file.mime_type, file.name)}
+                      <div className="flex items-center gap-2">
+                        {!isMissing && (
+                          <div
+                            role="checkbox"
+                            tabIndex={0}
+                            aria-checked={isSelected}
+                            onKeyDown={(e) => {
+                              if (e.key === ' ' || e.key === 'Enter') {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                handleToggleSelect(file.id, e.shiftKey);
+                              }
+                            }}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleToggleSelect(file.id, e.shiftKey);
+                            }}
+                            className={`w-5 h-5 rounded flex items-center justify-center transition-all cursor-pointer border ${
+                              isSelected
+                                ? 'bg-emerald-600 border-emerald-600 text-white opacity-100 shadow-2xs'
+                                : 'border-stone-300 dark:border-stone-600 bg-white/90 dark:bg-stone-800/90 text-transparent opacity-0 group-hover:opacity-100 hover:border-stone-400 dark:hover:border-stone-400'
+                            }`}
+                            title={isSelected ? 'Deselect' : 'Select (Shift+click for range)'}
+                          >
+                            {isSelected && <Check className="w-3.5 h-3.5 stroke-[2.5]" />}
+                          </div>
+                        )}
+                        <div className="p-2.5 rounded-lg bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-700/40 shadow-2xs">
+                          {getFileIcon(file.mime_type, file.name)}
+                        </div>
                       </div>
 
                       {/* Action buttons */}
@@ -696,6 +858,34 @@ export const FileGrid: React.FC<FileGridProps> = ({
             <table className="w-full text-left text-sm border-collapse">
               <thead>
                 <tr className="border-b border-stone-200 dark:border-stone-800 text-xs font-semibold text-stone-500 dark:text-stone-400 bg-stone-50/80 dark:bg-stone-900/40">
+                  <th className="py-3 px-3 w-10 text-center">
+                    <div
+                      role="checkbox"
+                      tabIndex={0}
+                      aria-checked={isAllSelected}
+                      onKeyDown={(e) => {
+                        if (e.key === ' ' || e.key === 'Enter') {
+                          e.preventDefault();
+                          handleToggleSelectAll();
+                        }
+                      }}
+                      onClick={handleToggleSelectAll}
+                      className={`w-4 h-4 mx-auto rounded flex items-center justify-center transition-colors cursor-pointer border ${
+                        isAllSelected
+                          ? 'bg-emerald-600 border-emerald-600 text-white'
+                          : selectedIds.size > 0
+                          ? 'bg-emerald-600/20 border-emerald-600 text-emerald-600 dark:text-emerald-400'
+                          : 'border-stone-300 dark:border-stone-600 hover:border-stone-400 bg-white dark:bg-stone-800'
+                      }`}
+                      title={isAllSelected ? 'Deselect all' : 'Select all'}
+                    >
+                      {isAllSelected ? (
+                        <Check className="w-3 h-3 stroke-[2.5]" />
+                      ) : selectedIds.size > 0 ? (
+                        <span className="w-2 h-0.5 bg-emerald-600 dark:bg-emerald-400 rounded-full" />
+                      ) : null}
+                    </div>
+                  </th>
                   <th
                     onClick={() =>
                       setSortOption((prev) => (prev === 'name_asc' ? 'name_desc' : 'name_asc'))
@@ -738,15 +928,50 @@ export const FileGrid: React.FC<FileGridProps> = ({
                   const isMissing = file.status === 'missing';
                   const ext = getFileExtension(file.name);
                   const dateInfo = formatFileDate(file.created_at);
+                  const isSelected = selectedIds.has(file.id);
 
                   return (
                     <tr
                       key={file.id}
                       onClick={() => !isMissing && onPreview(file)}
-                      className={`hover:bg-stone-50/80 dark:hover:bg-stone-800/50 transition-colors group cursor-pointer ${
+                      className={`transition-colors group cursor-pointer ${
+                        isSelected
+                          ? 'bg-emerald-50/40 dark:bg-emerald-950/30 hover:bg-emerald-50/60 dark:hover:bg-emerald-950/40'
+                          : 'hover:bg-stone-50/80 dark:hover:bg-stone-800/50'
+                      } ${
                         isMissing ? 'opacity-60 bg-red-50 dark:bg-red-950/10 cursor-default' : ''
                       }`}
                     >
+                      {/* Selection Checkbox */}
+                      <td className="py-3 px-3 w-10 text-center" onClick={(e) => e.stopPropagation()}>
+                        {!isMissing && (
+                          <div
+                            role="checkbox"
+                            tabIndex={0}
+                            aria-checked={isSelected}
+                            onKeyDown={(e) => {
+                              if (e.key === ' ' || e.key === 'Enter') {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                handleToggleSelect(file.id, e.shiftKey);
+                              }
+                            }}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleToggleSelect(file.id, e.shiftKey);
+                            }}
+                            className={`w-4 h-4 mx-auto rounded flex items-center justify-center transition-all cursor-pointer border ${
+                              isSelected
+                                ? 'bg-emerald-600 border-emerald-600 text-white'
+                                : 'border-stone-300 dark:border-stone-600 hover:border-stone-400 bg-white dark:bg-stone-800'
+                            }`}
+                            title={isSelected ? 'Deselect' : 'Select (Shift+click for range)'}
+                          >
+                            {isSelected && <Check className="w-3 h-3 stroke-[2.5]" />}
+                          </div>
+                        )}
+                      </td>
+
                       {/* Name */}
                       <td className="py-3 px-4 max-w-xs md:max-w-md truncate">
                         <div className="flex items-center gap-3">
@@ -851,6 +1076,42 @@ export const FileGrid: React.FC<FileGridProps> = ({
           </div>
         )}
       </div>
+
+      {/* Floating Bulk Action Bar */}
+      <BulkActionBar
+        selectedCount={selectedIds.size}
+        totalSize={selectedTotalSize}
+        isProcessing={isProcessingBulk}
+        onDownloadZip={() => onBulkDownloadZip?.(Array.from(selectedIds))}
+        onMove={() => setIsMoveModalOpen(true)}
+        onDelete={handleBulkDeleteAction}
+        onClearSelection={() => {
+          setSelectedIds(new Set());
+          setLastSelectedId(null);
+        }}
+      />
+
+      {/* Move Files Modal */}
+      <MoveFilesModal
+        isOpen={isMoveModalOpen}
+        onClose={() => setIsMoveModalOpen(false)}
+        fileCount={selectedIds.size}
+        folders={folders}
+        currentFolderId={currentFolderId}
+        onConfirmMove={async (destFolderId: string | null) => {
+          if (!onBulkMove) return;
+          setIsProcessingBulk(true);
+          try {
+            await onBulkMove(Array.from(selectedIds), destFolderId);
+            setSelectedIds(new Set());
+            setLastSelectedId(null);
+            setIsMoveModalOpen(false);
+          } finally {
+            setIsProcessingBulk(false);
+          }
+        }}
+        onFolderCreated={onFolderCreated}
+      />
     </div>
   );
 };

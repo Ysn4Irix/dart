@@ -1,6 +1,7 @@
 import { FastifyReply, FastifyRequest } from 'fastify';
 import { Readable } from 'node:stream';
 import bigInt from 'big-integer';
+import { ZipArchive } from 'archiver';
 import { getTelegramClient } from './client.js';
 import { streamLimiter, withFloodWaitRetry } from './limiter.js';
 import { fileRepo, FileRecord } from '../db/index.js';
@@ -242,5 +243,124 @@ export async function streamTelegramFile(
   } catch (error) {
     safeRelease();
     throw error;
+  }
+}
+
+/**
+ * Streams a ZIP archive of multiple files directly to the HTTP response
+ */
+export async function streamZipArchive(
+  files: FileRecord[],
+  reply: FastifyReply
+) {
+  const client = await getTelegramClient();
+  if (!client) {
+    return reply.status(503).send({ error: 'Telegram client not connected' });
+  }
+
+  const timestamp = new Date().toISOString().slice(0, 10);
+  const zipFilename = `dart_export_${timestamp}.zip`;
+
+  reply.header('Content-Type', 'application/zip');
+  reply.header('Content-Disposition', `attachment; filename="${encodeURIComponent(zipFilename)}"`);
+  reply.header('Cache-Control', 'no-cache, no-store, must-revalidate');
+
+  const archive = new ZipArchive({
+    zlib: { level: 1 }, // Fast compression for high streaming throughput
+  });
+
+  // Handle client abort / disconnect
+  let isAborted = false;
+  reply.raw.on('close', () => {
+    isAborted = true;
+    archive.destroy();
+  });
+
+  // Send the readable archive stream to the reply
+  reply.send(archive);
+
+  // Keep track of names to prevent zip entry name collision
+  const usedNames = new Set<string>();
+  const getUniqueZipName = (name: string): string => {
+    const clean = name.replace(/[\u0000-\u001f\\/:*?"<>|]/g, '_');
+    if (!usedNames.has(clean.toLowerCase())) {
+      usedNames.add(clean.toLowerCase());
+      return clean;
+    }
+    const extIdx = clean.lastIndexOf('.');
+    const base = extIdx > 0 ? clean.slice(0, extIdx) : clean;
+    const ext = extIdx > 0 ? clean.slice(extIdx) : '';
+    let counter = 1;
+    while (usedNames.has(`${base} (${counter})${ext}`.toLowerCase())) {
+      counter++;
+    }
+    const unique = `${base} (${counter})${ext}`;
+    usedNames.add(unique.toLowerCase());
+    return unique;
+  };
+
+  try {
+    for (const file of files) {
+      if (isAborted) break;
+
+      const entryName = getUniqueZipName(file.name);
+
+      // 1. Fetch Telegram message
+      let message;
+      try {
+        const messages = await withFloodWaitRetry(async () => {
+          return await client.getMessages('me', { ids: [file.telegram_message_id] });
+        });
+        message = messages[0];
+      } catch {
+        // Skip missing or inaccessible messages
+        continue;
+      }
+
+      if (!message) continue;
+
+      // Pure text note
+      if (!message.media) {
+        const rawText = message.message || (typeof message.text === 'string' ? message.text : '');
+        const buffer = Buffer.from(rawText, 'utf8');
+        await new Promise<void>((resolve, reject) => {
+          archive.once('entry', () => resolve());
+          archive.once('error', reject);
+          archive.append(buffer, { name: entryName });
+        });
+        continue;
+      }
+
+      // Media document / photo
+      const media = message.media;
+      const releaseSlot = await streamLimiter.acquire();
+
+      try {
+        const chunkSize = 512 * 1024;
+        const downloadIterator = client.iterDownload({
+          file: media,
+          chunkSize,
+          requestSize: chunkSize,
+        });
+
+        const readable = Readable.from(downloadIterator);
+
+        await new Promise<void>((resolve, reject) => {
+          archive.once('entry', () => resolve());
+          archive.once('error', reject);
+          archive.append(readable, { name: entryName });
+        });
+      } finally {
+        releaseSlot();
+      }
+    }
+
+    if (!isAborted) {
+      await archive.finalize();
+    }
+  } catch (err) {
+    if (!isAborted) {
+      archive.destroy(err as Error);
+    }
   }
 }

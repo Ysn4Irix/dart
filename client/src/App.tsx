@@ -10,7 +10,7 @@ import { SetupScreen } from './components/SetupScreen.js';
 import { LoginScreen } from './components/LoginScreen.js';
 import { DartLogo } from './components/DartLogo.js';
 import { PublicSharePage } from './pages/PublicSharePage.js';
-import { api } from './api.js';
+import { api, formatBytes } from './api.js';
 import { useDialog } from './context/DialogContext.js';
 import { AppUser, AuthStatus, FileRecord, Folder, SetupStatus, Theme } from './types.js';
 
@@ -286,6 +286,73 @@ export function App() {
     window.location.href = `/api/files/${file.id}/download`;
   };
 
+  const handleBulkDelete = async (fileIds: string[]) => {
+    if (fileIds.length === 0) return;
+    const confirmed = await dialog.confirm({
+      title: 'Delete Files',
+      message: `Are you sure you want to delete ${fileIds.length} ${fileIds.length === 1 ? 'file' : 'files'}?\nThis will permanently remove them from Dart and Telegram Saved Messages.`,
+      confirmText: `Delete ${fileIds.length} Files`,
+      variant: 'danger',
+      icon: 'trash',
+    });
+
+    if (!confirmed) return;
+
+    // Optimistic removal for instant UI response
+    const idsSet = new Set(fileIds);
+    setFiles((prev) => prev.filter((f) => !idsSet.has(f.id)));
+    if (previewTargetFile && idsSet.has(previewTargetFile.id)) {
+      setPreviewTargetFile(null);
+    }
+    if (shareTargetFile && idsSet.has(shareTargetFile.id)) {
+      setShareTargetFile(null);
+    }
+
+    try {
+      await api.bulkDelete(fileIds);
+      loadData();
+    } catch (err: unknown) {
+      const e = err as Error;
+      await dialog.alert({
+        title: 'Bulk Deletion Failed',
+        message: e.message || 'Failed to delete selected files.',
+        type: 'error',
+      });
+      loadData();
+    }
+  };
+
+  const handleBulkMove = async (fileIds: string[], folderId: string | null) => {
+    if (fileIds.length === 0) return;
+    try {
+      await api.bulkMove(fileIds, folderId);
+      loadData();
+    } catch (err: unknown) {
+      const e = err as Error;
+      await dialog.alert({
+        title: 'Move Failed',
+        message: e.message || 'Failed to move selected files.',
+        type: 'error',
+      });
+    }
+  };
+
+  const handleBulkDownloadZip = (fileIds: string[]) => {
+    if (fileIds.length === 0) return;
+    const selected = files.filter((f) => fileIds.includes(f.id));
+    const totalSize = selected.reduce((acc, f) => acc + f.size, 0);
+    const ONE_GB = 1024 * 1024 * 1024;
+    if (totalSize > ONE_GB) {
+      dialog.alert({
+        title: 'Download Limit Exceeded',
+        message: `The total size of the selected files (${formatBytes(totalSize)}) exceeds the 1 GB batch limit. Please select fewer files.`,
+        type: 'error',
+      });
+      return;
+    }
+    window.location.href = api.getZipDownloadUrl(fileIds);
+  };
+
   const totalSize = files.reduce((acc, f) => acc + f.size, 0);
 
   return (
@@ -329,6 +396,10 @@ export function App() {
           onDelete={handleDeleteFile}
           onSync={handleSync}
           isSyncing={isSyncing}
+          onBulkDelete={handleBulkDelete}
+          onBulkMove={handleBulkMove}
+          onBulkDownloadZip={handleBulkDownloadZip}
+          onFolderCreated={loadData}
         />
       </div>
 
