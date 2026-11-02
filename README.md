@@ -102,7 +102,7 @@ Dart includes standard Docker Compose deployment support.
 # Build and start in detached mode
 docker compose up -d
 ```
-The application will be live at `http://localhost:4000`.
+The application will be live at `http://localhost:4001` (or your configured `HOST_PORT`).
 
 ---
 

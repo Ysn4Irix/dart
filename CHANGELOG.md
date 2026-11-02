@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.10.6] - 2026-11-02
+
+### Fixed
+- **Host Port Mapping Conflict Resolution:** Updated `docker-compose.yml` to map to `${HOST_PORT:-4001}:4000` instead of hardcoding `4000:4000`. Prevents Docker daemon bind errors (`0.0.0.0:4000 port is already allocated`) when the host machine has an existing service or development process occupying port 4000.
+
 ## [0.10.5] - 2026-11-02
 
 ### Fixed
