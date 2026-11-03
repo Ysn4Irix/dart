@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import {
   Download,
-  Send,
   Clock,
   Loader2,
   FileX,
@@ -89,8 +88,6 @@ export const PublicSharePage: React.FC<PublicSharePageProps> = ({ slug }) => {
   const isImage = details.mimeType.startsWith('image/');
   const isPdf = details.mimeType === 'application/pdf';
 
-  const telegramShareLink = `tg://openmessage?message_id=${details.telegramMessageId}`;
-
   return (
     <div className="min-h-screen bg-stone-100 dark:bg-stone-950 flex flex-col items-center justify-center p-6 text-stone-900 dark:text-stone-100 transition-colors">
       <div className="w-full max-w-2xl bg-white dark:bg-stone-900/90 border border-stone-200 dark:border-stone-800/80 rounded-2xl p-8 shadow-2xl space-y-6">
@@ -164,21 +161,13 @@ export const PublicSharePage: React.FC<PublicSharePageProps> = ({ slug }) => {
         </div>
 
         {/* Actions */}
-        <div className="pt-2 flex flex-col sm:flex-row gap-3">
+        <div className="pt-2">
           <a
             href={details.downloadUrl}
-            className="flex-1 flex items-center justify-center gap-2 py-3 px-6 bg-emerald-600 hover:bg-emerald-500 text-white font-medium text-sm rounded-xl transition-colors shadow-lg shadow-emerald-950/20 focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:outline-hidden"
+            className="w-full flex items-center justify-center gap-2 py-3 px-6 bg-emerald-600 hover:bg-emerald-500 text-white font-medium text-sm rounded-xl transition-colors shadow-lg shadow-emerald-950/20 focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:outline-hidden cursor-pointer"
           >
             <Download className="w-4 h-4" />
             <span>Download File</span>
-          </a>
-
-          <a
-            href={telegramShareLink}
-            className="flex items-center justify-center gap-2 py-3 px-5 bg-stone-100 dark:bg-stone-800 hover:bg-stone-200 dark:hover:bg-stone-700 text-stone-800 dark:text-stone-200 text-sm font-medium rounded-xl border border-stone-200 dark:border-stone-700/60 transition-colors focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:outline-hidden"
-          >
-            <Send className="w-4 h-4 text-sky-600 dark:text-sky-400" />
-            <span>Open in Telegram</span>
           </a>
         </div>
       </div>

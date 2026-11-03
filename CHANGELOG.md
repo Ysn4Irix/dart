@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.13.3] - 2026-11-03
+
+### Removed
+- **"Open in Telegram" Download Page Action:** Removed the "Open in Telegram" / "View in Telegram" button and associated deep links from both the client SPA download page (`<PublicSharePage>`) and the standalone server-rendered HTML fallback in `shares.ts`. The primary "Download File" action is now cleanly centered and prioritized.
+
 ## [0.13.2] - 2026-11-03
 
 ### Fixed

@@ -29,7 +29,6 @@ function renderStandaloneShareHtml(share: any, file: any): string {
   const safeSize = formatBytes(file.size);
   const downloadUrl = `/api/shares/${share.id}/download`;
   const streamUrl = `/api/shares/${share.id}/stream`;
-  const telegramLink = file.telegram_message_id ? `tg://openmessage?message_id=${file.telegram_message_id}` : null;
 
   let previewHtml = '';
   if (file.mime_type.startsWith('image/')) {
@@ -86,18 +85,12 @@ function renderStandaloneShareHtml(share: any, file: any): string {
     .meta { font-size: 0.8125rem; color: var(--text-muted); display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; margin-bottom: 1.5rem; }
     .actions { display: flex; gap: 0.75rem; flex-wrap: wrap; }
     .btn-download {
-      flex: 1; min-width: 200px; display: inline-flex; align-items: center; justify-content: center;
+      width: 100%; display: inline-flex; align-items: center; justify-content: center;
       gap: 0.5rem; background: var(--accent); color: white; padding: 0.75rem 1.5rem;
       font-weight: 500; font-size: 0.875rem; border-radius: 0.75rem; text-decoration: none;
       transition: background 0.15s;
     }
     .btn-download:hover { background: var(--accent-hover); }
-    .btn-telegram {
-      display: inline-flex; align-items: center; justify-content: center;
-      gap: 0.5rem; background: rgba(128,128,128,0.1); color: var(--text);
-      padding: 0.75rem 1.25rem; font-size: 0.875rem; font-weight: 500;
-      border: 1px solid var(--border); border-radius: 0.75rem; text-decoration: none;
-    }
     .footer { text-align: center; font-size: 0.75rem; color: var(--text-muted); padding: 1.5rem 0 0.5rem; }
   </style>
 </head>
@@ -123,7 +116,6 @@ function renderStandaloneShareHtml(share: any, file: any): string {
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
         Download File
       </a>
-      ${telegramLink ? `<a href="${telegramLink}" class="btn-telegram">View in Telegram</a>` : ''}
     </div>
   </div>
 
