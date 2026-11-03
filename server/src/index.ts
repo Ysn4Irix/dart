@@ -5,7 +5,7 @@ import cors from '@fastify/cors';
 import multipart from '@fastify/multipart';
 import fastifyCookie from '@fastify/cookie';
 import fastifyStatic from '@fastify/static';
-import { config } from './config.js';
+import { config, getClientDistPath } from './config.js';
 import { initDatabase } from './db/index.js';
 import { getTelegramClient } from './telegram/client.js';
 import { syncSavedMessages } from './telegram/sync.js';
@@ -82,14 +82,7 @@ async function bootstrap() {
   await fastify.register(shareRoutes);
 
   // 4. Serve Static Frontend (Production / Docker mode)
-  const clientDistPaths = [
-    process.env.CLIENT_DIST,
-    path.resolve(process.cwd(), '../client/dist'),
-    path.resolve(process.cwd(), 'client/dist'),
-    path.resolve(process.cwd(), 'dist/client'),
-  ].filter(Boolean) as string[];
-
-  const clientDist = clientDistPaths.find((p) => fs.existsSync(p));
+  const clientDist = getClientDistPath();
 
   if (clientDist) {
     fastify.log.info(`Serving static client assets from: ${clientDist}`);
@@ -105,7 +98,7 @@ async function bootstrap() {
       if (pathname.startsWith('/api/')) {
         return reply.status(404).send({ error: 'Endpoint not found' });
       }
-      return reply.sendFile('index.html');
+      return reply.status(200).sendFile('index.html');
     });
   }
 

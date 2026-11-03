@@ -42,6 +42,22 @@ export const config = {
 };
 
 /**
+ * Resolves the absolute path to the compiled client distribution folder if available.
+ */
+export function getClientDistPath(): string | null {
+  const candidates = [
+    process.env.CLIENT_DIST,
+    path.resolve(process.cwd(), '../client/dist'),
+    path.resolve(process.cwd(), 'client/dist'),
+    path.resolve(process.cwd(), 'dist/client'),
+    import.meta.dirname ? path.resolve(import.meta.dirname, '../../client/dist') : null,
+    import.meta.dirname ? path.resolve(import.meta.dirname, '../client/dist') : null,
+  ].filter(Boolean) as string[];
+
+  return candidates.find((p) => fs.existsSync(p)) || null;
+}
+
+/**
  * Persists updated session credentials into volume JSON file and .env file
  */
 export function saveSessionToEnv(sessionString: string, apiId?: number, apiHash?: string) {

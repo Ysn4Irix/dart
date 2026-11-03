@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.13.1] - 2026-11-03
+
+### Fixed
+- **Public URL HTML Download Page Routing:** Resolved an issue where accessing a public share link (`/s/:slug`) in a web browser returned raw JSON metadata instead of the download page. Browser requests are now properly served the interactive frontend download page (`index.html` loading `<PublicSharePage>`), with a clean server-side HTML fallback when running without built assets. Dedicated JSON metadata remains available at `GET /api/shares/:slug` and for programmatic requests with `Accept: application/json`.
+- **Dynamic Public URL Host Resolution:** Derived the default public URL in `POST /api/shares` dynamically from incoming request protocol and host headers when `PUBLIC_URL` is not set in the environment, ensuring correct links when deployed behind proxies or on custom ports.
+- **Public Share Test Suite (`server/test/shares.test.ts`):** Added automated unit test coverage verifying HTML download page delivery for browser requests, JSON metadata responses for API callers, and 404/410 handling.
+
 ## [0.13.0] - 2026-11-02
 
 ### Added
