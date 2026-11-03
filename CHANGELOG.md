@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.13.2] - 2026-11-03
+
+### Fixed
+- **Modal Layering & Stacking Hierarchy (ShareModal over PreviewModal):** Fixed an issue where clicking the "Share" action inside `<PreviewModal>` opened the `<ShareModal>` backwards (underneath the preview). Elevated `<ShareModal>` to `z-[60]` with dedicated DOM reordering in `<App>`, backdrop dismissal, and capture-phase Escape key handling that closes the share dialog without dismissing the active file preview.
+- **Global Dialog & Toast Stacking Integrity:** Adjusted `<DialogContext>` confirm/prompt dialogs to `z-[70]` and `<ToastContext>` notifications to `z-[80]`, ensuring prompt/confirm dialogs and toast alerts are never occluded by full-screen file previewers or sub-modals.
+
 ## [0.13.1] - 2026-11-03
 
 ### Fixed

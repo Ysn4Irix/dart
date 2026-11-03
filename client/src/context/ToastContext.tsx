@@ -185,7 +185,7 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       {/* Toast Notification Container */}
       <aside
         aria-label="Notifications"
-        className="fixed bottom-5 right-5 z-50 flex flex-col gap-2 max-w-md w-full px-4 sm:px-0 pointer-events-none"
+        className="fixed bottom-5 right-5 z-[80] flex flex-col gap-2 max-w-md w-full px-4 sm:px-0 pointer-events-none"
       >
         {toasts.map((toast) => (
           <div

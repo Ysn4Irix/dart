@@ -532,12 +532,6 @@ export function App() {
         }}
       />
 
-      <ShareModal
-        isOpen={Boolean(shareTargetFile)}
-        onClose={() => setShareTargetFile(null)}
-        file={shareTargetFile}
-      />
-
       <PreviewModal
         isOpen={Boolean(previewTargetFile)}
         onClose={() => setPreviewTargetFile(null)}
@@ -547,6 +541,12 @@ export function App() {
         onDownload={handleDownloadFile}
         onDelete={handleDeleteFile}
         onShare={(f) => setShareTargetFile(f)}
+      />
+
+      <ShareModal
+        isOpen={Boolean(shareTargetFile)}
+        onClose={() => setShareTargetFile(null)}
+        file={shareTargetFile}
       />
 
       <AuthModal

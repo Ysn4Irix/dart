@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { X, Copy, Check, ExternalLink } from 'lucide-react';
 import { FileRecord } from '../types.js';
 import { api } from '../api.js';
@@ -16,6 +16,35 @@ export const ShareModal: React.FC<ShareModalProps> = ({ isOpen, onClose, file })
   const [expiresIn, setExpiresIn] = useState<number | undefined>(undefined);
   const [shareUrl, setShareUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+
+  const handleClose = useCallback(() => {
+    setShareUrl(null);
+    setCopied(false);
+    onClose();
+  }, [onClose]);
+
+  // Clean reset whenever active target file or modal open state changes
+  useEffect(() => {
+    setShareUrl(null);
+    setCopied(false);
+    setIsLoading(false);
+  }, [file?.id, isOpen]);
+
+  // Close on Escape with capture phase to avoid bubbling to background modals (e.g. PreviewModal)
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+        handleClose();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown, true);
+    return () => window.removeEventListener('keydown', handleKeyDown, true);
+  }, [isOpen, handleClose]);
 
   if (!isOpen || !file) return null;
 
@@ -43,16 +72,27 @@ export const ShareModal: React.FC<ShareModalProps> = ({ isOpen, onClose, file })
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/60 dark:bg-black/70 flex items-center justify-center p-4 backdrop-blur-xs">
-      <div className="bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-xl w-full max-w-md p-6 shadow-2xl space-y-4 transition-colors">
+    <div
+      onClick={(e) => {
+        if (e.target === e.currentTarget) handleClose();
+      }}
+      className="fixed inset-0 z-[60] bg-black/60 dark:bg-black/70 flex items-center justify-center p-4 backdrop-blur-xs animate-in fade-in duration-150"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="share-modal-title"
+    >
+      <div
+        className="bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-xl w-full max-w-md p-6 shadow-2xl space-y-4 transition-colors"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="flex items-center justify-between pb-3 border-b border-stone-200 dark:border-stone-800">
-          <h3 className="font-semibold text-stone-900 dark:text-stone-100">Share File</h3>
+          <h3 id="share-modal-title" className="font-semibold text-stone-900 dark:text-stone-100">
+            Share File
+          </h3>
           <button
-            onClick={() => {
-              setShareUrl(null);
-              onClose();
-            }}
-            className="text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 transition-colors p-1 cursor-pointer"
+            onClick={handleClose}
+            className="text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 transition-colors p-1 cursor-pointer rounded-md focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:outline-hidden"
+            aria-label="Close share dialog"
           >
             <X className="w-5 h-5" />
           </button>
@@ -82,7 +122,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({ isOpen, onClose, file })
             <button
               onClick={handleGenerate}
               disabled={isLoading}
-              className="w-full py-2.5 text-sm font-medium bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg transition-colors cursor-pointer shadow-xs"
+              className="w-full py-2.5 text-sm font-medium bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg transition-colors cursor-pointer shadow-xs focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:outline-hidden"
             >
               {isLoading ? 'Generating Link...' : 'Create Public Share Link'}
             </button>
@@ -100,7 +140,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({ isOpen, onClose, file })
                 />
                 <button
                   onClick={handleCopy}
-                  className="px-3 py-2 bg-stone-200 dark:bg-stone-800 hover:bg-stone-300 dark:hover:bg-stone-700 text-stone-800 dark:text-stone-200 rounded-lg text-xs font-medium flex items-center gap-1.5 transition-colors cursor-pointer"
+                  className="px-3 py-2 bg-stone-200 dark:bg-stone-800 hover:bg-stone-300 dark:hover:bg-stone-700 text-stone-800 dark:text-stone-200 rounded-lg text-xs font-medium flex items-center gap-1.5 transition-colors cursor-pointer focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:outline-hidden"
                 >
                   {copied ? <Check className="w-3.5 h-3.5 text-emerald-500 dark:text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
                   <span>{copied ? 'Copied' : 'Copy'}</span>
@@ -120,10 +160,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({ isOpen, onClose, file })
 
             <div className="flex justify-end gap-2 pt-2">
               <button
-                onClick={() => {
-                  setShareUrl(null);
-                  onClose();
-                }}
+                onClick={handleClose}
                 className="px-4 py-2 text-sm text-stone-700 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800 rounded-lg transition-colors cursor-pointer"
               >
                 Done
