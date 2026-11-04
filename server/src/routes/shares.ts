@@ -98,7 +98,6 @@ function renderStandaloneShareHtml(share: any, file: any): string {
   <div class="header">
     <svg width="24" height="24" viewBox="0 0 40 40" fill="none"><path d="M20 4L34 32L20 26L6 32L20 4Z" fill="#10B981" stroke="#059669" stroke-width="2" stroke-linejoin="round"/></svg>
     <span style="font-weight: 600; font-size: 1.125rem;">Dart</span>
-    <span style="font-size: 0.75rem; color: var(--text-muted); margin-left: auto;">Private Telegram Storage</span>
   </div>
 
   <div class="card">

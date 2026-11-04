@@ -97,7 +97,6 @@ export const PublicSharePage: React.FC<PublicSharePageProps> = ({ slug }) => {
             <DartLogo size={22} />
             <span className="font-semibold text-stone-900 dark:text-stone-100 tracking-tight">Dart</span>
           </div>
-          <span className="text-xs text-stone-500">Served directly from Telegram Storage</span>
         </div>
 
         {/* Media Preview if supported */}
