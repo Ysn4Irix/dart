@@ -42,26 +42,42 @@ export const DATE_FILTERS: { id: DateFilter; label: string; shortLabel: string }
   { id: 'year', label: 'Past Year', shortLabel: 'Past Year' },
 ];
 
+function normalizeTimestamp(val: unknown): number {
+  if (typeof val === 'number') {
+    return val < 1e11 ? val * 1000 : val;
+  }
+  const parsed = Number(val);
+  if (!isNaN(parsed) && parsed > 0) {
+    return parsed < 1e11 ? parsed * 1000 : parsed;
+  }
+  const dateObj = new Date(val as string);
+  const time = dateObj.getTime();
+  return isNaN(time) ? Date.now() : time;
+}
+
 function matchesDate(file: FileRecord, dateFilter: DateFilter): boolean {
   if (dateFilter === 'all') return true;
   const now = Date.now();
-  const diffMs = now - file.created_at;
+  const fileTime = normalizeTimestamp(file.created_at);
+  const diffMs = now - fileTime;
+  // Allow up to 60 seconds of clock drift tolerance for future-dated timestamps
   switch (dateFilter) {
     case 'today':
-      return diffMs <= 24 * 60 * 60 * 1000 && diffMs >= 0;
+      return diffMs <= 24 * 60 * 60 * 1000 && diffMs >= -60000;
     case 'week':
-      return diffMs <= 7 * 24 * 60 * 60 * 1000 && diffMs >= 0;
+      return diffMs <= 7 * 24 * 60 * 60 * 1000 && diffMs >= -60000;
     case 'month':
-      return diffMs <= 30 * 24 * 60 * 60 * 1000 && diffMs >= 0;
+      return diffMs <= 30 * 24 * 60 * 60 * 1000 && diffMs >= -60000;
     case 'year':
-      return diffMs <= 365 * 24 * 60 * 60 * 1000 && diffMs >= 0;
+      return diffMs <= 365 * 24 * 60 * 60 * 1000 && diffMs >= -60000;
     default:
       return true;
   }
 }
 
 export function formatFileDate(timestamp: number): { display: string; full: string; relative: string } {
-  const date = new Date(timestamp);
+  const normalizedTime = normalizeTimestamp(timestamp);
+  const date = new Date(normalizedTime);
   const now = new Date();
   const diffMs = now.getTime() - date.getTime();
   const diffSec = Math.floor(diffMs / 1000);
@@ -346,28 +362,38 @@ export const FileGrid: React.FC<FileGridProps> = ({
     prevFolderIdRef.current = currentFolderId;
   }, [currentFolderId]);
 
-  // Date counts
+  // Date counts (scoped to current category)
+  const categoryScopedFiles = useMemo(() => {
+    if (selectedCategory === 'all') return files;
+    return files.filter((f) => matchesCategory(f, selectedCategory));
+  }, [files, selectedCategory]);
+
   const dateCounts = useMemo(() => {
     const counts: Record<DateFilter, number> = {
-      all: files.length,
+      all: categoryScopedFiles.length,
       today: 0,
       week: 0,
       month: 0,
       year: 0,
     };
-    for (const f of files) {
+    for (const f of categoryScopedFiles) {
       if (matchesDate(f, 'today')) counts.today++;
       if (matchesDate(f, 'week')) counts.week++;
       if (matchesDate(f, 'month')) counts.month++;
       if (matchesDate(f, 'year')) counts.year++;
     }
     return counts;
-  }, [files]);
+  }, [categoryScopedFiles]);
 
-  // Category counts
+  // Category counts (scoped to current date filter)
+  const dateScopedFiles = useMemo(() => {
+    if (selectedDateFilter === 'all') return files;
+    return files.filter((f) => matchesDate(f, selectedDateFilter));
+  }, [files, selectedDateFilter]);
+
   const categoryCounts = useMemo(() => {
     const counts: Record<FileCategory, number> = {
-      all: files.length,
+      all: dateScopedFiles.length,
       documents: 0,
       media: 0,
       audio: 0,
@@ -375,7 +401,7 @@ export const FileGrid: React.FC<FileGridProps> = ({
       apps: 0,
       code: 0,
     };
-    for (const f of files) {
+    for (const f of dateScopedFiles) {
       if (matchesCategory(f, 'documents')) counts.documents++;
       if (matchesCategory(f, 'media')) counts.media++;
       if (matchesCategory(f, 'audio')) counts.audio++;
@@ -384,7 +410,7 @@ export const FileGrid: React.FC<FileGridProps> = ({
       if (matchesCategory(f, 'code')) counts.code++;
     }
     return counts;
-  }, [files]);
+  }, [dateScopedFiles]);
 
   // Filtered & Sorted files
   const filteredFiles = useMemo(() => {
@@ -622,7 +648,13 @@ export const FileGrid: React.FC<FileGridProps> = ({
             <Calendar className="w-3.5 h-3.5 text-stone-500" />
             <select
               value={selectedDateFilter}
-              onChange={(e) => setSelectedDateFilter(e.target.value as DateFilter)}
+              onChange={(e) => {
+                const nextFilter = e.target.value as DateFilter;
+                setSelectedDateFilter(nextFilter);
+                if (nextFilter === 'all' && currentFolderId === '__recent__') {
+                  onNavigateFolder(null);
+                }
+              }}
               className="bg-transparent text-stone-800 dark:text-stone-200 focus:outline-none cursor-pointer"
               title="Filter by message date"
             >
@@ -720,7 +752,12 @@ export const FileGrid: React.FC<FileGridProps> = ({
         <div className="flex items-center gap-2 shrink-0">
           {selectedDateFilter !== 'all' && (
             <button
-              onClick={() => setSelectedDateFilter('all')}
+              onClick={() => {
+                setSelectedDateFilter('all');
+                if (currentFolderId === '__recent__') {
+                  onNavigateFolder(null);
+                }
+              }}
               className="flex items-center gap-1.5 px-2.5 py-1 text-xs text-stone-700 dark:text-stone-300 hover:text-stone-900 dark:hover:text-stone-100 bg-white dark:bg-stone-800/80 hover:bg-stone-100 dark:hover:bg-stone-800 rounded-lg border border-stone-200 dark:border-stone-700/60 shadow-2xs transition-colors cursor-pointer"
               title="Clear date filter"
             >
@@ -848,6 +885,9 @@ export const FileGrid: React.FC<FileGridProps> = ({
                   if (onClearSearch) onClearSearch();
                   setSelectedCategory('all');
                   setSelectedDateFilter('all');
+                  if (currentFolderId === '__recent__') {
+                    onNavigateFolder(null);
+                  }
                 }}
                 className="px-3.5 py-1.5 bg-stone-100 dark:bg-stone-800 hover:bg-stone-200 dark:hover:bg-stone-700 text-stone-800 dark:text-stone-200 text-xs font-medium rounded-lg border border-stone-300 dark:border-stone-700 transition-colors cursor-pointer shadow-2xs focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:outline-hidden"
               >

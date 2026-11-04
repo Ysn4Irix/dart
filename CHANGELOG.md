@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.13.5] - 2026-11-04
+
+### Fixed
+- **"All Dates" Filter Functionality & Smooth Navigation:** Resolved an issue where selecting "All Dates" in the date range dropdown or clearing the active date filter badge while viewing "Recent Files" left the user trapped in the `__recent__` view state. Switching to "All Dates" or clearing the active date filter now seamlessly transitions back to "All Files" (`onNavigateFolder(null)`), updating the breadcrumb, sidebar selection, and file listing.
+- **Synchronized Date & Category Filter Counts:** Scoped `dateCounts` to the currently active category filter and scoped `categoryCounts` to the currently active date filter, preventing discrepancies where the dropdown displayed totals from unrelated categories.
+- **Timestamp Normalization & Clock Drift Tolerance:** Normalized file creation timestamps across second/millisecond formats and introduced a 60-second forward-tolerance buffer for `matchesDate`, ensuring files created on servers with minor clock drift relative to client machines are not improperly excluded from time windows.
+
 ## [0.13.4] - 2026-11-04
 
 ### Removed
